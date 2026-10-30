@@ -13,7 +13,7 @@ export const db =
   globalForDb.db ??
   drizzle(pool, {
     schema,
-    logger: process.env.NODE_ENV === "development",
+    logger: false,
   });
 
 if (process.env.NODE_ENV !== "production") {

@@ -15,11 +15,13 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "seed": "tsx scripts/seed-creators.ts"
   },
   "dependencies": {
     "@lynk/shared": "workspace:*",
     "@scalar/express-api-reference": "^0.8.46",
+    "aws4fetch": "^1.0.20",
     "better-auth": "^1.2.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",

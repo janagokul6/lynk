@@ -29,3 +29,12 @@ Locked 2026-10-30. Change only via explicit decision, not drive-by refactors.
 2. **Wave 1** — roles + guards, Google login wiring, Connect YT/IG token storage
 3. **Wave 2** — creator tables, pg-boss sync jobs, pgvector matching primitives
 4. **Wave 3** — R2 uploads, payments schema, messaging when needed
+
+## Agentic rails (locked)
+
+| Concern | Choice |
+| --- | --- |
+| Agent entry | `GET/POST /api/tools` — Zod-described tools, session or `x-agent-key` |
+| Jobs | Named payloads in `@lynk/shared` (`jobNames`, `creatorSyncPayloadSchema`) |
+| Events | `server/lib/events.ts` domain bus for sync/tool hooks |
+| Embeddings | Local deterministic vectors now; swap provider behind `embedText` later |

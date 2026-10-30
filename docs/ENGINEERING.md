@@ -22,7 +22,9 @@ server
 - No AI-style filler comments. Name things clearly instead.
 - Do not add dependencies without a decision note if they replace a locked choice.
 - Socket.IO stays off the boot path until messaging is in scope.
-- External social APIs (YouTube/Meta) run in workers, not request handlers (except thin authenticated proxies if unavoidable).
+- External social APIs (YouTube/Meta) run in providers + workers; HTTP handlers call services only.
+- Agent-facing capabilities go through `modules/tools` (never ad-hoc agent routes per domain).
+- Prefer extending an existing module over adding a new top-level folder.
 
 ## Quality
 

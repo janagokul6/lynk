@@ -34,7 +34,7 @@ export default function PublicHomePage() {
             </div>
             <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Lynk</span>
           </div>
-          <button className="text-slate-600 dark:text-muted-foreground hover:text-slate-900 dark:hover:text-foreground text-sm font-semibold transition-colors">Login</button>
+          <a href="/login" className="text-slate-600 dark:text-muted-foreground hover:text-slate-900 dark:hover:text-foreground text-sm font-semibold transition-colors">Login</a>
         </div>
       </nav>
 

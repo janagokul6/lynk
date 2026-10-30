@@ -8,6 +8,7 @@ node_modules/
 out/
 dist/
 build/
+server/.data/
 *.tsbuildinfo
 next-env.d.ts
 playwright-report/
