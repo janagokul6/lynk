@@ -1,0 +1,34 @@
+openapi: 3.0.3
+info:
+  title: Lynk API
+  description: Backend API with Express, TypeScript, PostgreSQL
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Development server
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      description: Returns API and database status
+      operationId: getHealth
+      tags:
+        - Health
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        db:
+          type: string
+          example: connected

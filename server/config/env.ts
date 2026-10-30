@@ -1,0 +1,33 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+  PORT: z.coerce.number().default(3000),
+  SOCKET_IO_PORT: z.coerce.number().default(3001),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
+  BETTER_AUTH_URL: z.string().url().default("http://localhost:3000"),
+  YOUTUBE_API_KEY: z.string().min(1).optional(),
+  META_GRAPH_API_VERSION: z.string().default("v25.0"),
+  META_IG_USER_ID: z.string().min(1).optional(),
+  META_PAGE_ACCESS_TOKEN: z.string().min(1).optional(),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000),
+  RATE_LIMIT_MAX: z.coerce.number().default(100),
+  RATE_LIMIT_AUTH_MAX: z.coerce.number().default(5),
+});
+
+export type Env = z.infer<typeof envSchema>;
+
+function loadEnv(): Env {
+  const result = envSchema.safeParse(process.env);
+  if (!result.success) {
+    const errors = result.error.flatten().fieldErrors;
+    const message = Object.entries(errors)
+      .map(([key, vals]) => `${key}: ${vals?.join(", ")}`)
+      .join("\n");
+    throw new Error(`Invalid environment variables:\n${message}`);
+  }
+  return result.data;
+}
+
+export const env = loadEnv();

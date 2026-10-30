@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: lynk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lynk
+      POSTGRES_USER: lynk
+      POSTGRES_PASSWORD: lynk
+    ports:
+      - "5432:5432"
+    volumes:
+      - lynk-postgres-data:/var/lib/postgresql/data
+      # Initialize extensions / seed schema on first start
+      - ./db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lynk -d lynk"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  lynk-postgres-data:
+    driver: local
+
