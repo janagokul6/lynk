@@ -72,7 +72,7 @@ export default function AboutPage() {
           </span>
           <h1 className="relative text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 dark:text-white mb-6">
             Democratizing <br />
-            <span className="text-primary">Influence.</span>
+            <span className="text-primary">with Lynk.</span>
           </h1>
           <p className="relative text-lg font-medium leading-relaxed text-slate-600 dark:text-slate-400">
             We&apos;re on a mission to bring transparency to influencer marketing. Our AI-driven platform connects

@@ -52,7 +52,7 @@ export default function FAQPage() {
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-white shrink-0">
                 <Icon name="auto_awesome" size={20} />
               </div>
-              <span className="text-lg font-bold tracking-tight text-text hidden sm:inline">Influence.AI</span>
+              <span className="text-lg font-bold tracking-tight text-text hidden sm:inline">Lynk</span>
             </Link>
           </div>
           <button className="text-text-muted hover:text-text text-sm font-semibold transition-colors">Login</button>

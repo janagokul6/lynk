@@ -1,12 +1,11 @@
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
+import type { CampaignStatus } from "@lynk/shared";
 import { db } from "../../lib/db.js";
 import { campaign } from "../../db/schema.js";
 
 export type CampaignRow = typeof campaign.$inferSelect;
 export type CampaignInsert = typeof campaign.$inferInsert;
-
-const statuses = ["draft", "live", "completed"] as const;
-export type CampaignStatus = (typeof statuses)[number];
+export type { CampaignStatus };
 
 export interface CreateCampaignInput {
   userId: string;

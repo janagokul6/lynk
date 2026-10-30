@@ -18,9 +18,7 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
   "include": [
@@ -29,15 +27,18 @@
     "lib/**/*",
     "middleware/**/*",
     "modules/**/*",
+    "policies/**/*",
     "types/**/*",
     "utils/**/*",
     "app.ts",
     "server.ts",
-    "workers/**/*"
+    "workers/**/*",
+    "vitest.config.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "drizzle"
+    "drizzle",
+    "**/*.test.ts"
   ]
 }

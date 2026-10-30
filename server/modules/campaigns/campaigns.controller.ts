@@ -101,7 +101,7 @@ export async function create(req: ReqWithUserId, res: Response): Promise<void> {
       campaignImage: data.campaignImage || undefined,
     });
     res.status(201).json(rowToJson(row));
-  } catch (e) {
+  } catch {
     res.status(500).json({ error: "Failed to create campaign" });
   }
 }

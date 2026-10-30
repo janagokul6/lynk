@@ -1,0 +1,46 @@
+{
+  "name": "lynk",
+  "private": true,
+  "packageManager": "pnpm@10.33.4",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter @lynk/server --filter @lynk/client run dev",
+    "dev:client": "pnpm --filter @lynk/client dev",
+    "dev:server": "pnpm --filter @lynk/server dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "check": "pnpm typecheck && pnpm lint && pnpm test",
+    "test:e2e": "pnpm --filter @lynk/client test:e2e",
+    "db:push": "pnpm --filter @lynk/server db:push",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "eslint": "^9.22.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.26.0"
+  },
+  "lint-staged": {
+    "packages/shared/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "server/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "client/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ]
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
+}

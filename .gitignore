@@ -10,6 +10,8 @@ dist/
 build/
 *.tsbuildinfo
 next-env.d.ts
+playwright-report/
+test-results/
 
 # env / secrets
 .env
@@ -25,3 +27,4 @@ next-env.d.ts
 coverage/
 .vscode/
 .idea/
+.turbo/

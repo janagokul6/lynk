@@ -11,10 +11,28 @@ import {
   integer,
   date,
   index,
+  customType,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import type { UserRole } from "@lynk/shared";
 
-// Better Auth: user table
+const vector1536 = customType<{ data: number[]; driverData: string }>({
+  dataType() {
+    return "vector(1536)";
+  },
+  toDriver(value: number[]): string {
+    return `[${value.join(",")}]`;
+  },
+  fromDriver(value: string): number[] {
+    return value
+      .replace(/^\[/, "")
+      .replace(/\]$/, "")
+      .split(",")
+      .filter(Boolean)
+      .map(Number);
+  },
+});
+
 export const user = pgTable(
   "user",
   {
@@ -23,13 +41,13 @@ export const user = pgTable(
     email: varchar("email", { length: 255 }).notNull(),
     emailVerified: boolean("emailVerified").notNull(),
     image: varchar("image", { length: 255 }),
+    role: varchar("role", { length: 32 }).$type<UserRole>().notNull().default("brand"),
     createdAt: timestamp("createdAt").notNull(),
     updatedAt: timestamp("updatedAt").notNull(),
   },
   (table) => [uniqueIndex("user_email_unique").on(table.email)]
 );
 
-// Better Auth: session table
 export const session = pgTable(
   "session",
   {
@@ -47,7 +65,6 @@ export const session = pgTable(
   (table) => [uniqueIndex("session_token_unique").on(table.token)]
 );
 
-// Better Auth: account table
 export const account = pgTable("account", {
   id: varchar("id", { length: 255 }).primaryKey(),
   accountId: varchar("accountId", { length: 255 }).notNull(),
@@ -55,18 +72,17 @@ export const account = pgTable("account", {
   userId: varchar("userId", { length: 255 })
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  accessToken: varchar("accessToken", { length: 255 }),
-  refreshToken: varchar("refreshToken", { length: 255 }),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
   idToken: text("idToken"),
   accessTokenExpiresAt: timestamp("accessTokenExpiresAt"),
   refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt"),
-  scope: varchar("scope", { length: 255 }),
+  scope: text("scope"),
   password: varchar("password", { length: 255 }),
   createdAt: timestamp("createdAt").notNull(),
   updatedAt: timestamp("updatedAt").notNull(),
 });
 
-// Better Auth: verification table
 export const verification = pgTable("verification", {
   id: varchar("id", { length: 255 }).primaryKey(),
   identifier: varchar("identifier", { length: 255 }).notNull(),
@@ -76,7 +92,6 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updatedAt"),
 });
 
-// Custom: cache table
 export const cache = pgTable("cache", {
   key: varchar("key", { length: 255 }).primaryKey(),
   value: text("value").notNull(),
@@ -128,21 +143,120 @@ export const campaign = pgTable(
   ]
 );
 
-// Relations for Better Auth joins (optional, improves getSession performance)
+export const socialConnection = pgTable(
+  "social_connection",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: varchar("userId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    platform: varchar("platform", { length: 32 }).notNull(),
+    externalAccountId: varchar("externalAccountId", { length: 255 }).notNull(),
+    handle: varchar("handle", { length: 255 }),
+    accessToken: text("accessToken"),
+    refreshToken: text("refreshToken"),
+    scopes: text("scopes"),
+    tokenExpiresAt: timestamp("tokenExpiresAt"),
+    meta: jsonb("meta").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("social_connection_user_platform_unique").on(table.userId, table.platform),
+    index("social_connection_platform_idx").on(table.platform),
+  ]
+);
+
+export const creatorProfile = pgTable(
+  "creator_profile",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    platform: varchar("platform", { length: 32 }).notNull(),
+    externalId: varchar("externalId", { length: 255 }).notNull(),
+    handle: varchar("handle", { length: 255 }).notNull(),
+    displayName: varchar("displayName", { length: 255 }).notNull(),
+    imageUrl: text("imageUrl"),
+    followerCount: integer("followerCount"),
+    engagementRate: numeric("engagementRate", { precision: 8, scale: 4 }),
+    niches: jsonb("niches").$type<string[]>().notNull().default([]),
+    country: varchar("country", { length: 128 }),
+    raw: jsonb("raw").$type<Record<string, unknown>>().default({}),
+    embedding: vector1536("embedding"),
+    syncedAt: timestamp("syncedAt").notNull().defaultNow(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("creator_profile_platform_external_unique").on(table.platform, table.externalId),
+    index("creator_profile_handle_idx").on(table.handle),
+    index("creator_profile_platform_idx").on(table.platform),
+  ]
+);
+
+export const payoutAccount = pgTable(
+  "payout_account",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: varchar("userId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    provider: varchar("provider", { length: 64 }).notNull(),
+    providerAccountId: varchar("providerAccountId", { length: 255 }),
+    status: varchar("status", { length: 32 }).notNull().default("pending"),
+    currency: varchar("currency", { length: 8 }).notNull().default("INR"),
+    meta: jsonb("meta").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("payout_account_user_provider_unique").on(table.userId, table.provider)]
+);
+
+export const paymentIntent = pgTable(
+  "payment_intent",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaignId: uuid("campaignId").references(() => campaign.id, { onDelete: "set null" }),
+    payerUserId: varchar("payerUserId", { length: 255 }).references(() => user.id, {
+      onDelete: "set null",
+    }),
+    payeeUserId: varchar("payeeUserId", { length: 255 }).references(() => user.id, {
+      onDelete: "set null",
+    }),
+    amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
+    currency: varchar("currency", { length: 8 }).notNull().default("INR"),
+    status: varchar("status", { length: 32 }).notNull().default("draft"),
+    provider: varchar("provider", { length: 64 }),
+    providerRef: varchar("providerRef", { length: 255 }),
+    meta: jsonb("meta").$type<Record<string, unknown>>().default({}),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("payment_intent_campaign_idx").on(table.campaignId),
+    index("payment_intent_status_idx").on(table.status),
+  ]
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   campaigns: many(campaign),
+  socialConnections: many(socialConnection),
+  payoutAccounts: many(payoutAccount),
 }));
 
 export const campaignRelations = relations(campaign, ({ one }) => ({
-  user: one(user),
+  user: one(user, { fields: [campaign.userId], references: [user.id] }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
-  user: one(user),
+  user: one(user, { fields: [session.userId], references: [user.id] }),
 }));
 
 export const accountRelations = relations(account, ({ one }) => ({
-  user: one(user),
+  user: one(user, { fields: [account.userId], references: [user.id] }),
+}));
+
+export const socialConnectionRelations = relations(socialConnection, ({ one }) => ({
+  user: one(user, { fields: [socialConnection.userId], references: [user.id] }),
 }));

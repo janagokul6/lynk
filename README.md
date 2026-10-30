@@ -1,71 +1,51 @@
 # Lynk
 
-Influencer–brand connecting platform: AI-assisted discovery, campaigns, marketplace, and ROI tooling.
+Influencer–brand connecting platform: discovery, campaigns, marketplace, and ROI tooling.
 
-Synced from [janagokul6/lynk](https://github.com/janagokul6/lynk).
+## Decisions & rails
 
-## Stack
+- Locked stack choices: [`docs/DECISIONS.md`](docs/DECISIONS.md)
+- How to add code safely: [`docs/ENGINEERING.md`](docs/ENGINEERING.md)
 
-| Layer | Tech |
-| --- | --- |
-| **Client** | Next.js (App Router), TypeScript, Tailwind CSS, TanStack Query, Zustand |
-| **Server** | Express, TypeScript, PostgreSQL, Drizzle ORM, Better Auth, Socket.IO, pg-boss |
-| **Docs** | OpenAPI + Scalar at `/api-docs` |
+## Monorepo
 
-## Roles & surfaces
+```
+packages/shared   Zod contracts + shared types
+client            Next.js app
+server            Express API + Drizzle + Better Auth + pg-boss
+```
 
-- **Public** — landing, pricing, FAQ, marketplace
-- **Brand** — onboarding, discovery, campaigns, applications, shortlist, ROI calculator, messages
-- **Influencer** — dashboard, profile, media kit, wallet
-- **Admin** — verification queue, user management, fraud control
+Package manager: **pnpm workspaces**.
 
 ## Quick start
 
-### Prerequisites
+```bash
+pnpm install
 
-- Node.js 20+
-- PostgreSQL 16+ (or `docker compose` under `server/`)
+# Postgres (Docker under server/ or local). Then:
+cp server/.env.example server/.env
+cp client/.env.local.example client/.env.local
+pnpm db:push
 
-### Database
+pnpm dev:server   # default docs: /api-docs
+pnpm dev:client   # http://localhost:43123
+```
+
+## Quality gates
 
 ```bash
-cd server
-# with Docker:
-docker compose up -d
-
-# or local Postgres with user/db `lynk` / password `lynk`
-cp .env.example .env   # set DATABASE_URL + BETTER_AUTH_SECRET
-npm install
-npm run db:push        # or db:migrate
+pnpm check        # typecheck + lint + unit tests
+pnpm test:e2e     # Playwright (client running)
 ```
 
-### API
+CI runs `pnpm check` on every push/PR. Husky + lint-staged run eslint on staged TS files.
 
-```bash
-cd server
-npm run dev
-# default http://localhost:3000 — OpenAPI at /api-docs
-```
+## Stack snapshot
 
-### Web app
-
-```bash
-cd client
-cp .env.local.example .env.local   # NEXT_PUBLIC_API_URL
-npm install
-npm run dev
-```
-
-## Repo layout
-
-```
-client/   Next.js frontend
-server/   Express API, Drizzle schema, workers
-```
-
-## API highlights
-
-- `GET /api/health`
-- `POST /api/auth/*` — Better Auth
-- `GET /api/me` — session
-- `/api/discovery`, `/api/campaigns`, `/api/marketplace`
+| Layer | Choice |
+| --- | --- |
+| Web | Next.js, React 19, Tailwind 4, TanStack Query, Zustand, Axios |
+| API | Express 5, Zod, Better Auth (cookies), Drizzle, Postgres, pg-boss |
+| Match | Creator sync jobs + pgvector |
+| Files | Cloudflare R2 (S3 API) |
+| Pay | Schema-ready; Stripe Connect / Razorpay later |

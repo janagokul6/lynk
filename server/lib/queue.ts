@@ -14,6 +14,10 @@ export async function stopQueue(): Promise<void> {
   await queue.stop();
 }
 
+export async function ensureQueue(name: string): Promise<void> {
+  await queue.createQueue(name);
+}
+
 export function sendJob<T extends Record<string, unknown>>(
   name: string,
   data: T,

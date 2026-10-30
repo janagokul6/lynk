@@ -32,7 +32,7 @@ export default function PublicHomePage() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center text-white">
               <span className="material-symbols-outlined text-[20px]">auto_awesome</span>
             </div>
-            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Influence.AI</span>
+            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Lynk</span>
           </div>
           <button className="text-slate-600 dark:text-muted-foreground hover:text-slate-900 dark:hover:text-foreground text-sm font-semibold transition-colors">Login</button>
         </div>
@@ -214,7 +214,7 @@ export default function PublicHomePage() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary-500/10 blur-[100px] rounded-full pointer-events-none"></div>
           <div className="relative z-10 max-w-2xl mx-auto">
             <h2 className="text-3xl font-black mb-4 text-slate-900 dark:text-white">Ready to Optimize Your Spend?</h2>
-            <p className="text-slate-600 dark:text-muted-foreground mb-8">Join 5,000+ brands using Influence.AI to maximize their influencer marketing ROI.</p>
+            <p className="text-slate-600 dark:text-muted-foreground mb-8">Join 5,000+ brands using Lynk to maximize their influencer marketing ROI.</p>
             <button className="w-full sm:w-auto h-14 px-8 rounded-xl bg-primary-500 hover:bg-blue-500 text-white font-bold text-lg shadow-[0_0_25px_rgba(19,164,236,0.4)] transition-all transform hover:-translate-y-1">
               Start Your Free Trial
             </button>
@@ -226,9 +226,9 @@ export default function PublicHomePage() {
       <footer className="border-t border-slate-200 dark:border-border bg-slate-100 dark:bg-background-dark py-8 px-4 text-center">
         <div className="flex items-center justify-center gap-2 mb-4 opacity-50">
           <span className="material-symbols-outlined text-[20px] text-slate-700 dark:text-slate-300">auto_awesome</span>
-          <span className="font-bold text-slate-700 dark:text-slate-300">Influence.AI</span>
+          <span className="font-bold text-slate-700 dark:text-slate-300">Lynk</span>
         </div>
-        <p className="text-slate-500 dark:text-muted-foreground text-xs">© 2023 Influence.AI Inc. All rights reserved.</p>
+        <p className="text-slate-500 dark:text-muted-foreground text-xs">© 2026 Lynk. All rights reserved.</p>
       </footer>
     </div>
   );
