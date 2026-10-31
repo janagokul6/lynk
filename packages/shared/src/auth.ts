@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { userRoleSchema } from "./roles.js";
+
+export const selfServeRoleSchema = z.enum(["brand", "influencer"]);
+export type SelfServeRole = z.infer<typeof selfServeRoleSchema>;
 
 export const updateRoleSchema = z.object({
-  role: userRoleSchema,
+  role: selfServeRoleSchema,
 });
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;

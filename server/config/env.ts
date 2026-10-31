@@ -1,4 +1,12 @@
 import { z } from "zod";
+import { decodeTokenEncryptionKey } from "../lib/token-key.js";
+
+const booleanFromEnv = z.preprocess((value) => {
+  if (value === undefined || value === "") return false;
+  if (value === true || value === "true" || value === "1") return true;
+  if (value === false || value === "false" || value === "0") return false;
+  return value;
+}, z.boolean());
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
@@ -22,6 +30,33 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_AUTH_MAX: z.coerce.number().default(5),
+  TOKEN_ENCRYPTION_KEY: z.string().min(1).optional(),
+  ALLOW_CLIENT_SOCIAL_TOKENS: booleanFromEnv.default(false),
+}).superRefine((data, ctx) => {
+  if (data.NODE_ENV === "production" && !data.TOKEN_ENCRYPTION_KEY) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["TOKEN_ENCRYPTION_KEY"],
+      message: "TOKEN_ENCRYPTION_KEY is required in production",
+    });
+  }
+  if (data.ALLOW_CLIENT_SOCIAL_TOKENS && !data.TOKEN_ENCRYPTION_KEY) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["TOKEN_ENCRYPTION_KEY"],
+      message: "TOKEN_ENCRYPTION_KEY is required when ALLOW_CLIENT_SOCIAL_TOKENS is enabled",
+    });
+  }
+  if (!data.TOKEN_ENCRYPTION_KEY) return;
+  try {
+    decodeTokenEncryptionKey(data.TOKEN_ENCRYPTION_KEY);
+  } catch (err) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["TOKEN_ENCRYPTION_KEY"],
+      message: err instanceof Error ? err.message : "Invalid TOKEN_ENCRYPTION_KEY",
+    });
+  }
 });
 
 export type Env = z.infer<typeof envSchema>;

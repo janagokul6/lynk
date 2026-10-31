@@ -1,4 +1,5 @@
 export * from "./roles.js";
+export * from "./marketplace.js";
 export * from "./campaign.js";
 export * from "./creator.js";
 export * from "./jobs.js";

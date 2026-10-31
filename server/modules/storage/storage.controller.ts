@@ -3,16 +3,36 @@ import type { Request, Response } from "express";
 import { z } from "zod";
 import type { AuthedRequest } from "../../policies/requireSession.js";
 import {
+  contentTypeForKey,
+  contentTypeMatchesKey,
   createSignedUpload,
-  localUploadPath,
+  isAllowedContentType,
+  isSafeObjectKey,
+  MAX_UPLOAD_BYTES,
+  resolveLocalUpload,
   saveLocalUpload,
   verifyLocalUploadToken,
 } from "../../lib/storage.js";
 
-const signSchema = z.object({
-  key: z.string().trim().min(1).max(512).regex(/^[a-zA-Z0-9/_.-]+$/),
-  contentType: z.string().trim().min(1).max(128).default("application/octet-stream"),
-});
+const signSchema = z
+  .object({
+    key: z
+      .string()
+      .trim()
+      .min(1)
+      .max(200)
+      .refine((key) => isSafeObjectKey(key), "Invalid key"),
+    contentType: z
+      .string()
+      .trim()
+      .min(1)
+      .max(128)
+      .refine((value) => isAllowedContentType(value), "Unsupported content type"),
+  })
+  .refine((value) => contentTypeMatchesKey(value.contentType, value.key), {
+    message: "Content type does not match the file extension",
+    path: ["contentType"],
+  });
 
 export async function sign(req: Request, res: Response): Promise<void> {
   const { userId } = req as AuthedRequest;
@@ -21,7 +41,15 @@ export async function sign(req: Request, res: Response): Promise<void> {
     res.status(400).json({ error: "Validation failed", details: parsed.error.flatten() });
     return;
   }
+  if (!isSafeObjectKey(userId)) {
+    res.status(400).json({ error: "Invalid key" });
+    return;
+  }
   const keyed = `users/${userId}/${parsed.data.key}`;
+  if (!isSafeObjectKey(keyed)) {
+    res.status(400).json({ error: "Invalid key" });
+    return;
+  }
   const signed = await createSignedUpload(keyed, parsed.data.contentType);
   res.json(signed);
 }
@@ -31,27 +59,51 @@ export async function uploadLocal(req: Request, res: Response): Promise<void> {
   const verified = verifyLocalUploadToken(token);
   if (!verified) {
     res.status(401).json({ error: "Invalid or expired upload token" });
+    req.destroy();
+    return;
+  }
+  const declared = Number(req.headers["content-length"] ?? "");
+  if (Number.isFinite(declared) && declared > MAX_UPLOAD_BYTES) {
+    res.status(413).json({ error: "Upload too large" });
+    req.destroy();
     return;
   }
   const chunks: Buffer[] = [];
+  let total = 0;
   for await (const chunk of req) {
-    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += buf.length;
+    if (total > MAX_UPLOAD_BYTES) {
+      res.status(413).json({ error: "Upload too large" });
+      req.destroy();
+      return;
+    }
+    chunks.push(buf);
   }
   await saveLocalUpload(verified.key, Buffer.concat(chunks));
   res.status(201).json({ key: verified.key });
 }
 
 export async function getFile(req: Request, res: Response): Promise<void> {
+  const { userId, session } = req as AuthedRequest;
   const raw = req.params.key;
   const key = Array.isArray(raw) ? raw.join("/") : String(raw ?? "");
-  if (!key || key.includes("..")) {
+  const path = resolveLocalUpload(key);
+  if (!path) {
     res.status(400).json({ error: "Invalid key" });
     return;
   }
-  const path = localUploadPath(key);
+  const role = (session.user as { role?: string }).role;
+  const ownsKey = key === `users/${userId}` || key.startsWith(`users/${userId}/`);
+  if (role !== "admin" && !ownsKey) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
   if (!existsSync(path)) {
     res.status(404).json({ error: "Not found" });
     return;
   }
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Content-Type", contentTypeForKey(key));
   createReadStream(path).pipe(res);
 }

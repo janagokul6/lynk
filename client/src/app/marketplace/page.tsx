@@ -4,22 +4,23 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Icon } from "@/components/ui/Icon";
 import { api } from "@/lib/api";
 import type { MarketplaceCampaign } from "@/types";
+import {
+  CATEGORIES,
+  COMPENSATION_TYPES,
+  DELIVERABLE_TYPES,
+  LOCATIONS,
+  PLATFORMS,
+  SORT_OPTIONS,
+  WORK_TYPES,
+  type CompensationType,
+  type DeliverableType,
+  type Location,
+  type Platform,
+  type SortOption,
+  type WorkType,
+} from "@/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const PLATFORMS = ["Instagram", "TikTok", "YouTube", "X"] as const;
-const CATEGORIES = [
-  "Beauty & Wellness",
-  "Fashion",
-  "Fitness & Health",
-  "Food & Beverage",
-  "Tech & Electronics",
-  "Gaming",
-  "Travel",
-  "Lifestyle",
-  "UGC",
-  "Other",
-] as const;
-const COMPENSATION_TYPES = ["Fixed", "Barter", "Affiliate", "Hybrid"] as const;
 const PAY_BANDS = [
   { label: "Under ₹500", min: 0, max: 500 },
   { label: "₹500 – ₹1k", min: 500, max: 1000 },
@@ -27,37 +28,6 @@ const PAY_BANDS = [
   { label: "₹2.5k – ₹5k", min: 2500, max: 5000 },
   { label: "₹5k+", min: 5000, max: 999999 },
 ] as const;
-const LOCATIONS = ["Remote", "US Only", "UK", "Europe", "Global", "Other"] as const;
-const DELIVERABLE_TYPES = ["Posts", "Stories", "Reels", "Long-form video", "UGC", "Integration/Review"] as const;
-const WORK_TYPES = [
-  "Instagram Post",
-  "Reels / Shorts",
-  "Instagram Stories",
-  "Product Feature Video",
-  "In-Video Ad",
-  "Dedicated Video",
-  "Multi-Platform Integration",
-  "UGC",
-  "Brand Ambassador",
-  "Representative / Spokesperson",
-  "Unboxing / Review",
-  "Affiliate / Link in Bio",
-] as const;
-const SORT_OPTIONS = [
-  "Recommended",
-  "Match: High to low",
-  "Pay: High to low",
-  "Newest",
-  "Deadline: Soonest",
-] as const;
-
-type Platform = (typeof PLATFORMS)[number];
-type Category = (typeof CATEGORIES)[number];
-type CompensationType = (typeof COMPENSATION_TYPES)[number];
-type Location = (typeof LOCATIONS)[number];
-type DeliverableType = (typeof DELIVERABLE_TYPES)[number];
-type WorkType = (typeof WORK_TYPES)[number];
-type SortOption = (typeof SORT_OPTIONS)[number];
 
 const DEFAULT_ADVANCED = {
   platforms: [] as Platform[],

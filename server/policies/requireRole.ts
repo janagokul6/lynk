@@ -8,14 +8,25 @@ function readRole(session: AuthedRequest["session"]): UserRole | undefined {
 }
 
 export function requireRole(...roles: UserRole[]) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    void requireSession(req, res, () => {
-      const role = readRole((req as AuthedRequest).session);
-      if (!role || !roles.includes(role)) {
-        res.status(403).json({ error: "Forbidden" });
+  return (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    return requireSession(req, res, (err?: unknown) => {
+      if (err) {
+        next(err instanceof Error ? err : new Error("Unauthorized"));
         return;
       }
-      next();
+      if (res.headersSent) return;
+      try {
+        const role = readRole((req as AuthedRequest).session);
+        if (!role || !roles.includes(role)) {
+          res.status(403).json({ error: "Forbidden" });
+          return;
+        }
+        next();
+      } catch (error) {
+        next(error instanceof Error ? error : new Error("Forbidden"));
+      }
+    }).catch((error: unknown) => {
+      next(error instanceof Error ? error : new Error("Forbidden"));
     });
   };
 }

@@ -6,4 +6,4 @@ export const storageRouter = Router();
 
 storageRouter.post("/sign", requireSession, controller.sign);
 storageRouter.put("/upload", controller.uploadLocal);
-storageRouter.get("/files/{*key}", controller.getFile);
+storageRouter.get("/files/{*key}", requireSession, controller.getFile);

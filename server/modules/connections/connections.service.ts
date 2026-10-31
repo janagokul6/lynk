@@ -3,10 +3,20 @@ import type { SocialConnectionCreate } from "@lynk/shared";
 import { db } from "../../lib/db.js";
 import { socialConnection } from "../../db/schema.js";
 import { domainEvents } from "../../lib/events.js";
+import { encryptSecret } from "../../lib/secrets.js";
 import { enqueueCreatorSync } from "../creators/creators.service.js";
 
+const publicColumns = {
+  id: socialConnection.id,
+  platform: socialConnection.platform,
+  externalAccountId: socialConnection.externalAccountId,
+  handle: socialConnection.handle,
+  createdAt: socialConnection.createdAt,
+  updatedAt: socialConnection.updatedAt,
+};
+
 export async function listConnections(userId: string) {
-  return db.select().from(socialConnection).where(eq(socialConnection.userId, userId));
+  return db.select(publicColumns).from(socialConnection).where(eq(socialConnection.userId, userId));
 }
 
 export async function upsertConnection(userId: string, input: SocialConnectionCreate) {
@@ -15,8 +25,8 @@ export async function upsertConnection(userId: string, input: SocialConnectionCr
     platform: input.platform,
     externalAccountId: input.externalAccountId,
     handle: input.handle ?? null,
-    accessToken: input.accessToken ?? null,
-    refreshToken: input.refreshToken ?? null,
+    accessToken: input.accessToken ? encryptSecret(input.accessToken) : null,
+    refreshToken: input.refreshToken ? encryptSecret(input.refreshToken) : null,
     scopes: input.scopes ?? null,
     updatedAt: new Date(),
   };
@@ -28,7 +38,7 @@ export async function upsertConnection(userId: string, input: SocialConnectionCr
       target: [socialConnection.userId, socialConnection.platform],
       set: values,
     })
-    .returning();
+    .returning(publicColumns);
 
   domainEvents.emitEvent({
     type: "connection.upserted",
