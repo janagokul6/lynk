@@ -42,6 +42,7 @@ export const user = pgTable(
     emailVerified: boolean("emailVerified").notNull(),
     image: varchar("image", { length: 255 }),
     role: varchar("role", { length: 32 }).$type<UserRole>().notNull().default("brand"),
+    roleChosenAt: timestamp("roleChosenAt"),
     createdAt: timestamp("createdAt").notNull(),
     updatedAt: timestamp("updatedAt").notNull(),
   },

@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, desc, asc, sql, inArray, or, ilike } from "drizzle-orm";
+import { and, eq, gte, lte, desc, asc, sql, inArray, or, ilike, type SQL } from "drizzle-orm";
 import { db } from "../../lib/db.js";
 import { campaign } from "../../db/schema.js";
 
@@ -52,6 +52,14 @@ function deliverableToIcon(name: string): string {
   return "perm_media";
 }
 
+function jsonbHasAny(column: SQL, values: string[]): SQL {
+  const list = sql.join(
+    values.map((value) => sql`${value}`),
+    sql`, `
+  );
+  return sql`${column} ?| ARRAY[${list}]::text[]`;
+}
+
 function deliverableToColor(name: string): string {
   if (name.includes("YouTube")) return "text-red-500";
   if (name.includes("TikTok")) return "text-black bg-white rounded-full";
@@ -62,7 +70,7 @@ function deliverableToColor(name: string): string {
 export async function listMarketplaceCampaigns(
   filters: MarketplaceFilters
 ): Promise<MarketplaceCampaignRow[]> {
-  const conditions: ReturnType<typeof eq>[] = [eq(campaign.status, "live")];
+  const conditions: SQL[] = [eq(campaign.status, "live")];
 
   if (filters.search?.trim()) {
     const q = `%${filters.search.trim()}%`;
@@ -75,11 +83,11 @@ export async function listMarketplaceCampaigns(
   }
 
   if (filters.platforms?.length) {
-    conditions.push(sql`${campaign.platforms} ?| ${filters.platforms}`);
+    conditions.push(jsonbHasAny(sql`${campaign.platforms}`, filters.platforms));
   }
 
   if (filters.categories?.length) {
-    conditions.push(sql`${campaign.niches} ?| ${filters.categories}`);
+    conditions.push(jsonbHasAny(sql`${campaign.niches}`, filters.categories));
   }
 
   if (filters.compensationTypes?.length) {
@@ -101,7 +109,7 @@ export async function listMarketplaceCampaigns(
   }
 
   if (filters.workTypes?.length) {
-    conditions.push(sql`${campaign.deliverables} ?| ${filters.workTypes}`);
+    conditions.push(jsonbHasAny(sql`${campaign.deliverables}`, filters.workTypes));
   }
 
   if (filters.posted && filters.posted !== "Any") {

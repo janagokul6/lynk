@@ -4,11 +4,11 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Icon } from "@/components/ui/Icon";
 import { api } from "@/lib/api";
 import type { CreateCampaignPayload, Campaign } from "@/types";
+import { CATEGORIES, LOCATIONS, PLATFORMS, WORK_TYPES } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// Types and Options mirroring Marketplace
 const CAMPAIGN_TYPES = [
   "Product Review / Unboxing",
   "Social Media Integration / Video",
@@ -16,42 +16,21 @@ const CAMPAIGN_TYPES = [
   "Affiliate Partnership"
 ];
 
-const NICHES = [
-  "Fitness", "Beauty", "Wellness", "Tech", "Lifestyle", "Gaming", "Food"
-];
-
-const PLATFORMS = ["Instagram", "YouTube", "X"];
 const FOLLOWER_RANGES = ["Nano (1k - 10k)", "Micro (10k - 100k)", "Macro (100k - 500k)", "Mega (500k+)"];
-const LOCATIONS = ["Global (Anywhere)", "US Only", "UK", "Europe"];
 const COMPENSATION_TYPES = ["Fixed Payment", "Product / Barter", "Affiliate", "Hybrid"];
-
-const DELIVERABLE_OPTIONS = [
-  "Instagram Post",
-  "Reels / Shorts",
-  "Instagram Stories",
-  "Product Feature Video",
-  "In-Video Ad",
-  "Dedicated Video",
-  "Multi-Platform Integration",
-  "UGC",
-  "Brand Ambassador",
-  "Representative / Spokesperson",
-  "Unboxing / Review",
-  "Affiliate / Link in Bio",
-];
 
 export default function CreateCampaignPage() {
   const [formData, setFormData] = useState({
     title: "Summer Fitness Product Launch - UGC",
     campaignType: "Social Media Integration / Video",
-    niches: ["Fitness", "Wellness"],
+    niches: ["Fitness & Health"],
     description: "We're launching a new line of premium fitness supplements and looking for authentic fitness creators to create engaging social integration videos.",
-    deliverables: ["1 Instagram Reel (15-60 seconds)", "2 Instagram Stories"],
+    deliverables: ["Reels / Shorts", "Instagram Stories"],
     guidelines: "- Must show product clearly in first 3 seconds\n- Include brand mention and tag",
     platforms: ["Instagram"],
     followerRange: "Micro (10k - 100k)",
     minEngagement: "3",
-    location: "Global (Anywhere)",
+    location: "Global",
     minAge: "18",
     maxAge: "35",
     compensationType: "Fixed Payment",
@@ -65,8 +44,6 @@ export default function CreateCampaignPage() {
     endDate: "2024-06-30"
   });
 
-  const [customNiche, setCustomNiche] = useState("");
-  const [customDeliverable, setCustomDeliverable] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const router = useRouter();
@@ -134,20 +111,6 @@ export default function CreateCampaignPage() {
         [field]: arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item],
       };
     });
-  };
-
-  const addCustomNiche = () => {
-    if (customNiche.trim() && !formData.niches.includes(customNiche.trim())) {
-      setFormData((prev) => ({ ...prev, niches: [...prev.niches, customNiche.trim()] }));
-    }
-    setCustomNiche("");
-  };
-
-  const addCustomDeliverable = () => {
-    if (customDeliverable.trim() && !formData.deliverables.includes(customDeliverable.trim())) {
-      setFormData((prev) => ({ ...prev, deliverables: [...prev.deliverables, customDeliverable.trim()] }));
-    }
-    setCustomDeliverable("");
   };
 
   return (
@@ -271,7 +234,7 @@ export default function CreateCampaignPage() {
               <div>
                 <label className="block text-sm font-bold text-text mb-3">Primary Niche <span className="text-red-500">*</span></label>
                 <div className="flex flex-wrap gap-2">
-                  {NICHES.map(niche => (
+                  {CATEGORIES.map(niche => (
                     <button
                       key={niche}
                       onClick={() => toggleArrayItem("niches", niche)}
@@ -280,22 +243,6 @@ export default function CreateCampaignPage() {
                       {niche} {formData.niches.includes(niche) && "✓"}
                     </button>
                   ))}
-                </div>
-                <div className="flex items-center gap-2 mt-3 w-full sm:max-w-xs">
-                  <input
-                    type="text"
-                    value={customNiche}
-                    onChange={(e) => setCustomNiche(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomNiche())}
-                    placeholder="Custom niche..."
-                    className="flex-1 bg-surface-subtle border border-border rounded-lg px-3 py-1.5 text-sm text-text placeholder:text-text-muted outline-none focus:border-primary transition-colors font-medium"
-                  />
-                  <button
-                    onClick={addCustomNiche}
-                    className="px-3 py-1.5 rounded-lg text-sm font-bold bg-surface border border-border text-text-muted hover:text-text hover:bg-surface-subtle flex items-center gap-1 transition-colors"
-                  >
-                    <Icon name="add" size={16} /> Add
-                  </button>
                 </div>
               </div>
             </section>
@@ -339,7 +286,7 @@ export default function CreateCampaignPage() {
               <div>
                 <label className="block text-sm font-bold text-text mb-3">Required Deliverables <span className="text-red-500">*</span></label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {DELIVERABLE_OPTIONS.map(item => (
+                  {WORK_TYPES.map(item => (
                     <label key={item} className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${formData.deliverables.includes(item) ? "border-primary bg-primary/5" : "border-border bg-surface-subtle/50 hover:bg-surface-subtle"}`}>
                       <input
                         type="checkbox"
@@ -350,35 +297,6 @@ export default function CreateCampaignPage() {
                       <span className={`text-sm font-medium ${formData.deliverables.includes(item) ? "text-text font-bold" : "text-text-muted"}`}>{item}</span>
                     </label>
                   ))}
-                  {/* Render any manually added custom deliverables that aren't in the default set */}
-                  {formData.deliverables.filter(d => !DELIVERABLE_OPTIONS.includes(d)).map(customItem => (
-                    <label key={customItem} className="flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer border-primary bg-primary/5">
-                      <input
-                        type="checkbox"
-                        checked={true}
-                        onChange={() => toggleArrayItem("deliverables", customItem)}
-                        className="w-4.5 h-4.5 rounded border-border text-primary focus:ring-primary focus:ring-offset-background bg-surface"
-                      />
-                      <span className="text-sm font-medium text-text font-bold">{customItem}</span>
-                    </label>
-                  ))}
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-2 mt-4 max-w-lg">
-                  <input
-                    type="text"
-                    value={customDeliverable}
-                    onChange={(e) => setCustomDeliverable(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomDeliverable())}
-                    placeholder="E.g. 1 Blog Post"
-                    className="w-full sm:flex-1 bg-surface-subtle border border-border rounded-lg px-4 py-2.5 text-sm text-text placeholder:text-text-muted outline-none focus:border-primary transition-colors font-medium"
-                  />
-                  <button
-                    onClick={addCustomDeliverable}
-                    className="w-full sm:w-auto px-4 py-2.5 rounded-lg text-sm font-bold bg-primary/10 text-primary hover:bg-primary/20 flex items-center justify-center gap-1 transition-colors whitespace-nowrap"
-                  >
-                    <Icon name="add_circle" size={16} /> Add Custom
-                  </button>
                 </div>
               </div>
 

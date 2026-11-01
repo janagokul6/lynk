@@ -75,51 +75,40 @@ export interface CampaignSummary {
   createdAt: string;
 }
 
-export const PLATFORMS = ["Instagram", "TikTok", "YouTube", "X"] as const;
-export const CATEGORIES = [
-  "Beauty & Wellness",
-  "Fashion",
-  "Fitness & Health",
-  "Food & Beverage",
-  "Tech & Electronics",
-  "Gaming",
-  "Travel",
-  "Lifestyle",
-  "UGC",
-  "Other",
-] as const;
-export const COMPENSATION_TYPES = ["Fixed", "Barter", "Affiliate", "Hybrid"] as const;
-export const LOCATIONS = ["Remote", "US Only", "UK", "Europe", "Global", "Other"] as const;
-export const DELIVERABLE_TYPES = ["Posts", "Stories", "Reels", "Long-form video", "UGC", "Integration/Review"] as const;
-export const WORK_TYPES = [
-  "Instagram Post",
-  "Reels / Shorts",
-  "Instagram Stories",
-  "Product Feature Video",
-  "In-Video Ad",
-  "Dedicated Video",
-  "Multi-Platform Integration",
-  "UGC",
-  "Brand Ambassador",
-  "Representative / Spokesperson",
-  "Unboxing / Review",
-  "Affiliate / Link in Bio",
-] as const;
-export const SORT_OPTIONS = [
-  "Recommended",
-  "Match: High to low",
-  "Pay: High to low",
-  "Newest",
-  "Deadline: Soonest",
-] as const;
+import {
+  MARKETPLACE_PLATFORMS,
+  MARKETPLACE_CATEGORIES,
+  MARKETPLACE_COMPENSATION_TYPES,
+  MARKETPLACE_LOCATIONS,
+  MARKETPLACE_DELIVERABLE_TYPES,
+  MARKETPLACE_WORK_TYPES,
+  MARKETPLACE_SORT_OPTIONS,
+  type MarketplacePlatform,
+  type MarketplaceCategory,
+  type MarketplaceCompensationType,
+  type MarketplaceLocation,
+  type MarketplaceDeliverableType,
+  type MarketplaceWorkType,
+  type MarketplaceSortOption,
+} from "@lynk/shared";
 
-export type Platform = (typeof PLATFORMS)[number];
-export type Category = (typeof CATEGORIES)[number];
-export type CompensationType = (typeof COMPENSATION_TYPES)[number];
-export type Location = (typeof LOCATIONS)[number];
-export type DeliverableType = (typeof DELIVERABLE_TYPES)[number];
-export type WorkType = (typeof WORK_TYPES)[number];
-export type SortOption = (typeof SORT_OPTIONS)[number];
+export {
+  MARKETPLACE_PLATFORMS as PLATFORMS,
+  MARKETPLACE_CATEGORIES as CATEGORIES,
+  MARKETPLACE_COMPENSATION_TYPES as COMPENSATION_TYPES,
+  MARKETPLACE_LOCATIONS as LOCATIONS,
+  MARKETPLACE_DELIVERABLE_TYPES as DELIVERABLE_TYPES,
+  MARKETPLACE_WORK_TYPES as WORK_TYPES,
+  MARKETPLACE_SORT_OPTIONS as SORT_OPTIONS,
+};
+
+export type Platform = MarketplacePlatform;
+export type Category = MarketplaceCategory;
+export type CompensationType = MarketplaceCompensationType;
+export type Location = MarketplaceLocation;
+export type DeliverableType = MarketplaceDeliverableType;
+export type WorkType = MarketplaceWorkType;
+export type SortOption = MarketplaceSortOption;
 
 export interface MarketplaceCampaign {
   id: string;

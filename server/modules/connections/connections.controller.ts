@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { socialConnectionCreateSchema } from "@lynk/shared";
+import { env } from "../../config/env.js";
 import type { AuthedRequest } from "../../policies/requireSession.js";
 import * as service from "./connections.service.js";
 
@@ -23,6 +24,12 @@ export async function upsert(req: Request, res: Response): Promise<void> {
   const parsed = socialConnectionCreateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Validation failed", details: parsed.error.flatten() });
+    return;
+  }
+  if ((parsed.data.accessToken || parsed.data.refreshToken) && !env.ALLOW_CLIENT_SOCIAL_TOKENS) {
+    res.status(400).json({
+      error: "Client-supplied social tokens are disabled",
+    });
     return;
   }
   const row = await service.upsertConnection(userId, parsed.data);
