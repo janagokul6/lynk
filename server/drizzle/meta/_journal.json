@@ -8,6 +8,13 @@
       "when": 1773282216353,
       "tag": "0000_melted_dust",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793464855466,
+      "tag": "0001_sync_schema",
+      "breakpoints": true
     }
   ]
 }

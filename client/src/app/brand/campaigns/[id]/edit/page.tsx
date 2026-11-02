@@ -18,7 +18,7 @@ const DEFAULT_FORM = {
   platforms: [] as string[],
   followerRange: "Micro (10k - 100k)",
   minEngagement: "3",
-  location: "Global (Anywhere)",
+  location: "Global",
   minAge: "18",
   maxAge: "35",
   compensationType: "Fixed Payment",

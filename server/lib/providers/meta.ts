@@ -30,9 +30,12 @@ export async function searchMetaCreators(query: string): Promise<MetaCreator[]> 
   );
   url.searchParams.set("query", query);
   url.searchParams.set("fields", "id,username,country");
-  url.searchParams.set("access_token", env.META_PAGE_ACCESS_TOKEN!);
 
-  const resp = await fetch(url);
+  const resp = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${env.META_PAGE_ACCESS_TOKEN}`,
+    },
+  });
   const data = (await resp.json()) as MetaResponse;
   if (!resp.ok) {
     logger.warn("Meta creator search failed", {

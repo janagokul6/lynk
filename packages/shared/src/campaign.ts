@@ -1,4 +1,10 @@
 import { z } from "zod";
+import {
+  marketplaceCategorySchema,
+  marketplaceLocationSchema,
+  marketplacePlatformSchema,
+  marketplaceWorkTypeSchema,
+} from "./marketplace.js";
 
 export const campaignStatusSchema = z.enum([
   "draft",
@@ -12,13 +18,13 @@ export const campaignCreateSchema = z.object({
   campaignType: z.string().trim().min(1).max(128),
   description: z.string().trim().min(1),
   guidelines: z.string().trim().max(10000).optional(),
-  niches: z.array(z.string().trim().min(1)).default([]),
-  platforms: z.array(z.string().trim().min(1)).default([]),
-  deliverables: z.array(z.string().trim().min(1)).default([]),
+  niches: z.array(marketplaceCategorySchema).default([]),
+  platforms: z.array(marketplacePlatformSchema).default([]),
+  deliverables: z.array(marketplaceWorkTypeSchema).default([]),
   perks: z.array(z.string().trim().min(1)).default([]),
   followerRange: z.string().trim().max(64).optional(),
   minEngagement: z.number().min(0).max(100).optional(),
-  location: z.string().trim().max(128).optional(),
+  location: marketplaceLocationSchema.optional(),
   minAge: z.number().int().min(13).max(100).optional(),
   maxAge: z.number().int().min(13).max(100).optional(),
   compensationType: z.string().trim().min(1).max(64),
