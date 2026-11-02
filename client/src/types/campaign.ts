@@ -1,4 +1,21 @@
-export type CampaignStatus = "draft" | "live" | "completed";
+import {
+  MARKETPLACE_PLATFORMS,
+  MARKETPLACE_CATEGORIES,
+  MARKETPLACE_COMPENSATION_TYPES,
+  MARKETPLACE_LOCATIONS,
+  MARKETPLACE_DELIVERABLE_TYPES,
+  MARKETPLACE_WORK_TYPES,
+  MARKETPLACE_SORT_OPTIONS,
+  type CampaignStatus,
+  type MarketplacePlatform,
+  type MarketplaceCompensationType,
+  type MarketplaceLocation,
+  type MarketplaceDeliverableType,
+  type MarketplaceWorkType,
+  type MarketplaceSortOption,
+} from "@lynk/shared";
+
+export type { CampaignStatus };
 
 export interface Campaign {
   id: string;
@@ -75,23 +92,6 @@ export interface CampaignSummary {
   createdAt: string;
 }
 
-import {
-  MARKETPLACE_PLATFORMS,
-  MARKETPLACE_CATEGORIES,
-  MARKETPLACE_COMPENSATION_TYPES,
-  MARKETPLACE_LOCATIONS,
-  MARKETPLACE_DELIVERABLE_TYPES,
-  MARKETPLACE_WORK_TYPES,
-  MARKETPLACE_SORT_OPTIONS,
-  type MarketplacePlatform,
-  type MarketplaceCategory,
-  type MarketplaceCompensationType,
-  type MarketplaceLocation,
-  type MarketplaceDeliverableType,
-  type MarketplaceWorkType,
-  type MarketplaceSortOption,
-} from "@lynk/shared";
-
 export {
   MARKETPLACE_PLATFORMS as PLATFORMS,
   MARKETPLACE_CATEGORIES as CATEGORIES,
@@ -103,7 +103,6 @@ export {
 };
 
 export type Platform = MarketplacePlatform;
-export type Category = MarketplaceCategory;
 export type CompensationType = MarketplaceCompensationType;
 export type Location = MarketplaceLocation;
 export type DeliverableType = MarketplaceDeliverableType;
@@ -135,22 +134,4 @@ export interface MarketplaceCampaign {
   workTypes: WorkType[];
   postedAt: string;
   deadline?: string;
-}
-
-export interface MarketplaceFilters {
-  search?: string;
-  platforms?: string[];
-  categories?: string[];
-  compensationTypes?: string[];
-  payMin?: number;
-  payMax?: number;
-  locations?: string[];
-  deliverableTypes?: string[];
-  workTypes?: string[];
-  posted?: "7" | "30" | "Any";
-  verifiedOnly?: boolean;
-  minMatchScore?: number;
-  sort?: SortOption;
-  limit?: number;
-  offset?: number;
 }

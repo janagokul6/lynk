@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 
-export type DomainEvent =
+type DomainEvent =
   | { type: "creator.synced"; creatorId: string; platform: string }
   | { type: "connection.upserted"; userId: string; platform: string }
   | { type: "tool.invoked"; tool: string; userId?: string };

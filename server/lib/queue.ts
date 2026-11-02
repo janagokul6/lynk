@@ -2,7 +2,7 @@ import { PgBoss } from "pg-boss";
 import type { Job, SendOptions } from "pg-boss";
 import { env } from "../config/env.js";
 
-export const queue = new PgBoss({
+const queue = new PgBoss({
   connectionString: env.DATABASE_URL,
 });
 

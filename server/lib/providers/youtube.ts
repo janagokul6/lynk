@@ -38,10 +38,6 @@ function thumb(
   return t?.high?.url ?? t?.medium?.url ?? t?.default?.url ?? null;
 }
 
-export function youtubeConfigured(): boolean {
-  return Boolean(env.YOUTUBE_API_KEY);
-}
-
 export async function searchYoutubeChannels(query: string, max = 12): Promise<YoutubeChannel[]> {
   if (!env.YOUTUBE_API_KEY) return [];
 

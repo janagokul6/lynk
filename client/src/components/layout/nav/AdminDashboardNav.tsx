@@ -1,7 +1,7 @@
 import { BottomNav } from "../BottomNav";
 import type { NavItem } from "../BottomNav";
 
-export const ADMIN_NAV_ITEMS: NavItem[] = [
+const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", icon: "dashboard", href: "/admin/dashboard" },
   { label: "Users", icon: "group", href: "/admin/user-management" },
   { label: "Trust", icon: "verified_user", href: "/admin/verification-queue" },

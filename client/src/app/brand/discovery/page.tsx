@@ -271,7 +271,7 @@ export default function DiscoverySearchPage() {
   const filteredInfluencers = useMemo(() => {
     if (remoteInfluencers) return remoteInfluencers;
 
-    let result = INFLUENCERS.filter(inf => {
+    const result = INFLUENCERS.filter(inf => {
       const matchesSearch = inf.handle.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
         inf.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
       const matchesCategory = selectedCategory === "All" || inf.category === selectedCategory;
@@ -650,31 +650,6 @@ export default function DiscoverySearchPage() {
                   ))}
                 </div>
               </div>
-
-              {/* Price Range Filter */}
-              {/* <div>
-                <h3 className="text-xs font-bold text-slate-400 dark:text-muted-foreground uppercase tracking-widest mb-4">Investment Level</h3>
-                <div className="grid grid-cols-4 gap-2">
-                  {[1, 2, 3, 4].map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => {
-                        if (draftFilters.priceMin === v && draftFilters.priceMax === v) {
-                          setDraftFilters({ ...draftFilters, priceMin: 1, priceMax: 4 });
-                        } else {
-                          setDraftFilters({ ...draftFilters, priceMin: v, priceMax: v });
-                        }
-                      }}
-                      className={`h-11 rounded-xl text-sm font-bold transition-all border flex items-center justify-center ${draftFilters.priceMin <= v && draftFilters.priceMax >= v
-                          ? "bg-emerald-500 border-emerald-500 text-white"
-                          : "bg-white dark:bg-surface-card border-slate-200 dark:border-border text-slate-600 dark:text-muted-foreground"
-                        }`}
-                    >
-                      {"$".repeat(v)}
-                    </button>
-                  ))}
-                </div>
-              </div> */}
 
               {/* Region Selector */}
               <div>

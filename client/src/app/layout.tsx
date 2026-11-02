@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { Toaster } from "react-hot-toast";
-import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,7 +27,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-background-light dark:bg-background-dark font-sans text-slate-900 dark:text-slate-100 antialiased">
-        <Providers>{children}</Providers>
+        {children}
         <Toaster position="top-right" />
       </body>
     </html>

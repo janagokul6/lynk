@@ -1,12 +1,11 @@
 import { z } from "zod";
 import {
+  campaignStatusSchema,
   marketplaceCategorySchema,
   marketplaceLocationSchema,
   marketplacePlatformSchema,
   marketplaceWorkTypeSchema,
 } from "@lynk/shared";
-
-const campaignStatusSchema = z.enum(["draft", "live", "completed"]);
 
 export const createCampaignBodySchema = z.object({
   status: campaignStatusSchema.optional(),
@@ -43,6 +42,3 @@ export const updateCampaignBodySchema = createCampaignBodySchema.partial().exten
 export const listCampaignsQuerySchema = z.object({
   status: campaignStatusSchema.optional(),
 });
-
-export type CreateCampaignBody = z.infer<typeof createCampaignBodySchema>;
-export type UpdateCampaignBody = z.infer<typeof updateCampaignBodySchema>;

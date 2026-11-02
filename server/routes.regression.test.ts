@@ -7,7 +7,6 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { eq } from "drizzle-orm";
 
 vi.mock("./lib/queue.js", () => ({
-  queue: {},
   startQueue: vi.fn(async () => undefined),
   stopQueue: vi.fn(async () => undefined),
   ensureQueue: vi.fn(async () => undefined),

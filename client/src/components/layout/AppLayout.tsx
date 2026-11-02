@@ -4,7 +4,7 @@ import { InfluencerDashboardNav } from "./nav/InfluencerDashboardNav";
 import { BrandDashboardNav } from "./nav/BrandDashboardNav";
 import { AdminDashboardNav } from "./nav/AdminDashboardNav";
 
-export type DashboardVariant = "influencer" | "brand" | "admin";
+type DashboardVariant = "influencer" | "brand" | "admin";
 
 export interface AppLayoutProps {
     children: ReactNode;
