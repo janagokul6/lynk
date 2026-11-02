@@ -38,3 +38,15 @@ Locked 2026-10-30. Change only via explicit decision, not drive-by refactors.
 | Jobs | Named payloads in `@lynk/shared` (`jobNames`, `creatorSyncPayloadSchema`) |
 | Events | `server/lib/events.ts` domain bus for sync/tool hooks |
 | Embeddings | Local deterministic vectors now; swap provider behind `embedText` later |
+| Agentic UI | **CopilotKit** over **AG-UI** protocol |
+| Agent runtime | **Mastra** (TypeScript); no LangChain / LangGraph |
+| Model adapter | AI SDK providers (`@ai-sdk/openai` / Anthropic) via Mastra |
+| Domain boundary | Agents call Lynk HTTP tools/services only — never reimplement campaigns/match |
+| Long work | Existing **pg-boss** workers |
+| Product UX | Default `/agent` chat shell; legacy click dashboards remain |
+
+### Slice plan
+
+1. **Slice 1 (now)** — `packages/agent` brand agent + CopilotKit chat + `creators.match` generative results
+2. **Slice 2** — campaign draft + ROI tools in Mastra workflows
+3. **Slice 3** — influencer agent allowlist + more generative surfaces

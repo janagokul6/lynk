@@ -73,11 +73,14 @@ export default function PublicHomePage() {
             </p>
 
             <div className="flex flex-col gap-3 w-full max-w-xs mx-auto pt-4">
-              <button className="w-full h-12 rounded-xl bg-primary-500 hover:bg-blue-500 text-white font-bold text-base shadow-[0_0_20px_rgba(19,164,236,0.3)] transition-all transform active:scale-95 flex items-center justify-center gap-2">
-                <span>Start Free Trial</span>
+              <a
+                href="/agent"
+                className="w-full h-12 rounded-xl bg-primary-500 hover:bg-blue-500 text-white font-bold text-base shadow-[0_0_20px_rgba(19,164,236,0.3)] transition-all transform active:scale-95 flex items-center justify-center gap-2"
+              >
+                <span>Try the brand agent</span>
                 <span className="material-symbols-outlined text-sm">arrow_forward</span>
-              </button>
-              <p className="text-slate-500 dark:text-muted-foreground text-xs">No credit card required for demo.</p>
+              </a>
+              <p className="text-slate-500 dark:text-muted-foreground text-xs">Single search bar — match creators conversationally.</p>
             </div>
           </div>
 

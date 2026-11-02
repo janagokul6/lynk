@@ -9,6 +9,7 @@ out/
 dist/
 build/
 server/.data/
+.mastra/
 *.tsbuildinfo
 next-env.d.ts
 playwright-report/

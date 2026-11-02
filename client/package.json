@@ -12,6 +12,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@copilotkit/react-core": "^1.83.0",
+    "@copilotkit/react-ui": "^1.83.0",
     "@hookform/resolvers": "^5.0.0",
     "@lynk/shared": "workspace:*",
     "@tanstack/react-query": "^5.62.2",

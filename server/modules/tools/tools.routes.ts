@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { requireSession } from "../../policies/requireSession.js";
+import { requireAgentOrSession } from "../../policies/requireAgentOrSession.js";
 import * as controller from "./tools.controller.js";
 
 export const toolsRouter = Router();
 
-toolsRouter.get("/", requireSession, controller.listTools);
+toolsRouter.use(requireAgentOrSession);
+toolsRouter.get("/", controller.listTools);
 toolsRouter.post("/:name", controller.runTool);

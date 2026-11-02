@@ -6,7 +6,8 @@ Read this before adding features. Prefer structure over comments.
 
 ```
 packages/shared   Zod schemas + shared types (only cross-app contracts)
-client            Next.js App Router
+packages/agent    Mastra agents + Lynk tool wrappers (AG-UI via CopilotKit route)
+client            Next.js App Router + CopilotKit chat (`/agent`)
 server
   modules/<domain>/   routes → controller → service → validation
   policies/           authz guards (requireSession, requireRole)
@@ -23,7 +24,9 @@ server
 - Do not add dependencies without a decision note if they replace a locked choice.
 - Socket.IO stays off the boot path until messaging is in scope.
 - External social APIs (YouTube/Meta) run in providers + workers; HTTP handlers call services only.
-- Agent-facing capabilities go through `modules/tools` (never ad-hoc agent routes per domain).
+- Agent-facing capabilities go through `modules/tools` with `requireAgentOrSession` (session cookie or `x-agent-key`).
+- New LLM/agent behavior lives in `packages/agent` (Mastra on port 43126). UI chat lives under `client` with CopilotKit (`/agent`).
+- Generative UI for tools belongs next to the chat surface (`client/src/components/agent/*`), not inside Mastra.
 - Prefer extending an existing module over adding a new top-level folder.
 
 ## Quality

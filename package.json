@@ -3,9 +3,10 @@
   "private": true,
   "packageManager": "pnpm@10.33.4",
   "scripts": {
-    "dev": "pnpm -r --parallel --filter @lynk/server --filter @lynk/client run dev",
+    "dev": "pnpm -r --parallel --filter @lynk/server --filter @lynk/client --filter @lynk/agent run dev",
     "dev:client": "pnpm --filter @lynk/client dev",
     "dev:server": "pnpm --filter @lynk/server dev",
+    "dev:agent": "pnpm --filter @lynk/agent dev",
     "build": "pnpm -r run build",
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
@@ -25,6 +26,9 @@
   },
   "lint-staged": {
     "packages/shared/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "packages/agent/**/*.{ts,tsx}": [
       "eslint --fix"
     ],
     "server/**/*.{ts,tsx}": [

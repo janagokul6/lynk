@@ -2,6 +2,7 @@ import {
   creatorMatchQuerySchema,
   creatorSyncPayloadSchema,
   toolInputSchemas,
+  type CreatorMatchResult,
   type ToolName,
 } from "@lynk/shared";
 import { domainEvents } from "../../lib/events.js";
@@ -18,6 +19,25 @@ export const toolDescriptors = [
   },
 ];
 
+function toMatchResult(
+  rows: Awaited<ReturnType<typeof matchCreators>>
+): CreatorMatchResult {
+  return {
+    count: rows.length,
+    creators: rows.map((r) => ({
+      id: r.id,
+      platform: r.platform as "youtube" | "instagram",
+      handle: r.handle,
+      displayName: r.displayName,
+      imageUrl: r.imageUrl,
+      followerCount: r.followerCount,
+      engagementRate: r.engagementRate == null ? null : Number(r.engagementRate),
+      niches: r.niches ?? [],
+      country: r.country,
+    })),
+  };
+}
+
 export async function invokeTool(
   name: ToolName,
   rawInput: unknown,
@@ -32,7 +52,7 @@ export async function invokeTool(
     case "creators.match": {
       const input = creatorMatchQuerySchema.parse(rawInput);
       const rows = await matchCreators(input);
-      return { count: rows.length, creatorIds: rows.map((r) => r.id) };
+      return toMatchResult(rows);
     }
     case "creators.enqueue_sync": {
       const input = creatorSyncPayloadSchema.parse(rawInput);

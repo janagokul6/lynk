@@ -1,6 +1,6 @@
 # Lynk
 
-Influencer–brand platform with campaigns, discovery/matching, connections, and agent-ready tools.
+Influencer–brand platform with campaigns, discovery/matching, connections, and an AG-UI brand agent.
 
 ## Docs
 
@@ -11,7 +11,8 @@ Influencer–brand platform with campaigns, discovery/matching, connections, and
 
 ```
 packages/shared   Zod contracts (roles, jobs, tools, match)
-client            Next.js (port 43123)
+packages/agent    Mastra brand agent + CopilotKit AG-UI route (port 43126)
+client            Next.js (port 43123) — chat at /agent
 server            Express API (port 43124)
 ```
 
@@ -21,11 +22,19 @@ server            Express API (port 43124)
 pnpm install
 cp server/.env.example server/.env
 cp client/.env.local.example client/.env.local
+cp packages/agent/.env.example packages/agent/.env
+# set OPENAI_API_KEY in packages/agent/.env (live chat)
+# AGENT_API_KEY must match between server/.env and packages/agent/.env
+
 pnpm db:push
-pnpm --filter @lynk/server seed   # sample creators for matching
-pnpm dev:server
-pnpm dev:client
+pnpm --filter @lynk/server seed
+
+pnpm dev:server   # :43124
+pnpm dev:agent    # :43126 Mastra + /copilotkit
+pnpm dev:client   # :43123
 ```
+
+Open [http://127.0.0.1:43123/agent](http://127.0.0.1:43123/agent).
 
 ## Quality
 
@@ -44,8 +53,10 @@ pnpm test:e2e   # Playwright
 | Connections | `GET/POST /api/connections`, `DELETE /api/connections/:platform` |
 | Storage | `POST /api/storage/sign` (+ local upload fallback or R2) |
 | Tools (agents) | `GET /api/tools`, `POST /api/tools/:name` (`x-agent-key` or session) |
-| Campaigns / marketplace | existing modules |
+| AG-UI | Mastra `/copilotkit` (CopilotKit runtime) |
 
-## Agentic note
+## Agentic stack
 
-Tools are Zod-described in `@lynk/shared` and invoked via `/api/tools`. Domain events (`creator.synced`, `tool.invoked`, …) live on `server/lib/events.ts` for future agent hooks without rewriting HTTP modules.
+- **UI:** CopilotKit (AG-UI protocol) at `/agent`
+- **Runtime:** Mastra brand agent in `packages/agent`
+- **Domain:** tools call existing Lynk `/api/tools` (no duplicated business logic)
