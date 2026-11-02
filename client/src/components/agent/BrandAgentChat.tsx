@@ -2,29 +2,15 @@
 
 import { useCopilotAction } from "@copilotkit/react-core";
 import { CopilotChat } from "@copilotkit/react-ui";
+import type { CreatorMatchResult } from "@lynk/shared";
 import { CreatorMatchResults } from "./CreatorMatchResults";
-
-type MatchResult = {
-  count?: number;
-  creators?: Array<{
-    id: string;
-    platform: string;
-    handle: string;
-    displayName: string;
-    imageUrl?: string | null;
-    followerCount?: number | null;
-    engagementRate?: number | null;
-    niches?: string[];
-    country?: string | null;
-  }>;
-};
 
 export function BrandAgentChat() {
   useCopilotAction({
     name: "creators_match",
     available: "disabled",
     render: ({ status, result }) => (
-      <CreatorMatchResults status={status} result={result as MatchResult | undefined} />
+      <CreatorMatchResults status={status} result={result as CreatorMatchResult | undefined} />
     ),
   });
 

@@ -1,7 +1,10 @@
 import { config } from "dotenv";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
-config();
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+config({ path: path.join(packageRoot, ".env") });
 
 const emptyToUndefined = (value: unknown) => {
   if (typeof value !== "string") return value;
@@ -11,16 +14,20 @@ const emptyToUndefined = (value: unknown) => {
 
 const schema = z.object({
   OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
-  ANTHROPIC_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
   LYNK_API_URL: z.string().url().default("http://127.0.0.1:43124"),
-  AGENT_API_KEY: z.preprocess(emptyToUndefined, z.string().min(16).optional()),
+  AGENT_API_KEY: z.preprocess(emptyToUndefined, z.string().min(16)),
   CLIENT_ORIGIN: z.string().url().default("http://127.0.0.1:43123"),
 });
 
 export const agentEnv = schema.parse({
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   LYNK_API_URL: process.env.LYNK_API_URL,
   AGENT_API_KEY: process.env.AGENT_API_KEY,
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN,
 });
+
+if (!agentEnv.OPENAI_API_KEY) {
+  console.warn(
+    "[@lynk/agent] OPENAI_API_KEY is unset — Mastra boots, but brand chat replies will fail until it is set."
+  );
+}

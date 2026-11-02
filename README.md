@@ -29,9 +29,11 @@ cp packages/agent/.env.example packages/agent/.env
 pnpm db:push
 pnpm --filter @lynk/server seed
 
-pnpm dev:server   # :43124
-pnpm dev:agent    # :43126 Mastra + /copilotkit
-pnpm dev:client   # :43123
+# all three (or run the filters separately)
+pnpm dev
+# pnpm dev:server   # :43124
+# pnpm dev:agent    # :43126 Mastra + /copilotkit
+# pnpm dev:client   # :43123
 ```
 
 Open [http://127.0.0.1:43123/agent](http://127.0.0.1:43123/agent).

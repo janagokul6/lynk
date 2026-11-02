@@ -10,7 +10,7 @@ packages/agent    Mastra agents + Lynk tool wrappers (AG-UI via CopilotKit route
 client            Next.js App Router + CopilotKit chat (`/agent`)
 server
   modules/<domain>/   routes → controller → service → validation
-  policies/           authz guards (requireSession, requireRole)
+  policies/           authz guards (requireSession, requireRole, requireAgentOrSession)
   lib/                infra (db, auth, queue, cache, storage)
   workers/            background jobs only (no HTTP)
 ```

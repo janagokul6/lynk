@@ -2,11 +2,11 @@ import { z } from "zod";
 
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  PORT: z.coerce.number().default(3000),
+  PORT: z.coerce.number().default(43124),
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
   BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
-  BETTER_AUTH_URL: z.string().url().default("http://localhost:3000"),
-  CLIENT_ORIGIN: z.string().url().default("http://localhost:43123"),
+  BETTER_AUTH_URL: z.string().url().default("http://127.0.0.1:43124"),
+  CLIENT_ORIGIN: z.string().url().default("http://127.0.0.1:43123"),
   AGENT_API_KEY: z.string().min(16).optional(),
   GOOGLE_CLIENT_ID: z.string().min(1).optional(),
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),

@@ -1,21 +1,6 @@
 "use client";
 
-type CreatorHit = {
-  id: string;
-  platform: string;
-  handle: string;
-  displayName: string;
-  imageUrl?: string | null;
-  followerCount?: number | null;
-  engagementRate?: number | null;
-  niches?: string[];
-  country?: string | null;
-};
-
-type MatchResult = {
-  count?: number;
-  creators?: CreatorHit[];
-};
+import type { CreatorMatchHit, CreatorMatchResult } from "@lynk/shared";
 
 function formatFollowers(n?: number | null) {
   if (n == null) return "—";
@@ -29,7 +14,7 @@ export function CreatorMatchResults({
   result,
 }: {
   status: string;
-  result?: MatchResult;
+  result?: CreatorMatchResult | CreatorMatchHit[] | null;
 }) {
   if (status === "inProgress" || status === "executing") {
     return (
@@ -41,15 +26,14 @@ export function CreatorMatchResults({
 
   if (!result) return null;
 
-  const creators = result.creators ?? [];
+  const creators = Array.isArray(result) ? result : (result.creators ?? []);
+  const count = Array.isArray(result) ? result.length : (result.count ?? creators.length);
 
   return (
     <div className="rounded-xl border border-border bg-white/90 dark:bg-surface-dark p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white">Creator matches</h3>
-        <span className="text-xs font-semibold text-primary">
-          {result.count ?? creators.length} found
-        </span>
+        <span className="text-xs font-semibold text-primary">{count} found</span>
       </div>
       {creators.length === 0 ? (
         <p className="text-sm text-slate-500">

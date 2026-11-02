@@ -60,9 +60,7 @@ export default function ROIPredictionResultsPage() {
       },
     };
 
-    // Stub: replace with real API call (e.g. POST /api/campaign-results)
-    // eslint-disable-next-line no-console
-    console.log('campaignResultsFeedback', payload);
+    void payload;
 
     setIsSubmitting(false);
     setIsSubmitted(true);

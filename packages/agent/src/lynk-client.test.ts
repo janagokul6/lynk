@@ -23,7 +23,7 @@ describe("invokeLynkTool", () => {
     vi.resetModules();
   });
 
-  it("posts to /api/tools/:name with agent key", async () => {
+  it("always posts with x-agent-key", async () => {
     const { invokeLynkTool } = await import("./lynk-client.js");
     const result = await invokeLynkTool<{ ok: boolean }>("health.check", {});
     expect(result).toEqual({ ok: true });
@@ -31,9 +31,10 @@ describe("invokeLynkTool", () => {
       "http://127.0.0.1:43124/api/tools/health.check",
       expect.objectContaining({
         method: "POST",
-        headers: expect.objectContaining({
+        headers: {
+          "content-type": "application/json",
           "x-agent-key": "lynk-dev-agent-key-16",
-        }),
+        },
       })
     );
   });

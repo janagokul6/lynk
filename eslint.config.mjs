@@ -11,7 +11,7 @@ export default tseslint.config(
       "**/.next/**",
       "**/coverage/**",
       "server/drizzle/**",
-      "server/workers/socket.worker.ts",
+      "packages/agent/.mastra/**",
     ],
   },
   {
