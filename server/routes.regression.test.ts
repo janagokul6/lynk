@@ -126,7 +126,7 @@ describe("auth role assignment", () => {
     expect(still.body.user.role).toBe("influencer");
   });
 
-  it("allows one self-serve role choice after sign-up and then locks it", async () => {
+  it("locks the role chosen at sign-up", async () => {
     const agent = request.agent(app);
     const email = `brand-${Date.now()}@example.com`;
     const created = await agent
@@ -136,13 +136,9 @@ describe("auth role assignment", () => {
     expect(created.status).toBe(200);
 
     const first = await agent.patch("/api/me/role").set("Origin", ORIGIN).send({ role: "influencer" });
-    expect(first.status).toBe(200);
-    expect(first.body.role).toBe("influencer");
-
-    const second = await agent.patch("/api/me/role").set("Origin", ORIGIN).send({ role: "brand" });
-    expect(second.status).toBe(409);
+    expect(first.status).toBe(409);
     const me = await agent.get("/api/me").set("Origin", ORIGIN);
-    expect(me.body.user.role).toBe("influencer");
+    expect(me.body.user.role).toBe("brand");
   });
 });
 

@@ -4,6 +4,8 @@ import { creatorMatchHitSchema } from "./match.js";
 import { roiEstimateSchema } from "./roi.js";
 import { shortlistAddSchema, shortlistGroupCreateSchema, shortlistListSchema, shortlistRemoveSchema } from "./shortlist.js";
 import { homeCampaignCardSchema } from "./home.js";
+import { inviteCreateSchema, inviteSchema } from "./invite.js";
+import { threadSummarySchema } from "./messaging.js";
 
 export const TOOL_CONFIRM_HEADER = "x-lynk-confirm";
 
@@ -12,6 +14,7 @@ export const confirmToolNames = [
   "applications.decide",
   "applications.apply",
   "applications.withdraw",
+  "invites.create",
 ] as const;
 export type ConfirmToolName = (typeof confirmToolNames)[number];
 
@@ -138,8 +141,9 @@ export const publicInsightsSchema = z.object({
 });
 
 export const messagesStatusSchema = z.object({
-  available: z.literal(false),
+  available: z.literal(true),
   message: z.string(),
+  threads: z.array(threadSummarySchema),
 });
 
 export const agentToolInputSchemas = {
@@ -159,6 +163,7 @@ export const agentToolInputSchemas = {
   "applications.withdraw": applicationWithdrawSchema,
   "insights.public": z.object({}).strict(),
   "messages.status": z.object({}).strict(),
+  "invites.create": inviteCreateSchema,
 } as const;
 
 export const agentToolOutputSchemas = {
@@ -178,4 +183,5 @@ export const agentToolOutputSchemas = {
   "applications.withdraw": z.union([confirmationProposalSchema, applicationSchema]),
   "insights.public": publicInsightsSchema,
   "messages.status": messagesStatusSchema,
+  "invites.create": z.union([confirmationProposalSchema, inviteSchema]),
 } as const;

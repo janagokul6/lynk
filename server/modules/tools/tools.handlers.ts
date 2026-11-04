@@ -321,11 +321,33 @@ export async function withdrawOwnApplication(
   return result.application;
 }
 
-export function messagingStatus() {
+export async function messagingStatus(userId: string | undefined) {
+  const { listThreads } = await import("../messages/messages.service.js");
+  const threads = userId ? await listThreads(userId) : [];
   return {
-    available: false as const,
-    message: "Messaging is not available yet.",
+    available: true as const,
+    message: "Messaging is available on accepted collaborations.",
+    threads,
   };
+}
+
+export async function createInviteFromTool(
+  userId: string | undefined,
+  input: { campaignId: string; creatorId: string },
+  confirmed: boolean
+) {
+  const brandId = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal(
+      "Invite creator",
+      "Send a campaign invite. The creator is notified in the app and by email when they have a Lynk account.",
+      input
+    );
+  }
+  const { createInvite } = await import("../invites/invites.service.js");
+  const result = await createInvite(brandId, input);
+  if (!result.ok) throw new ToolError(result.error, result.status);
+  return result.invite;
 }
 
 export const shortlistHandlers = {

@@ -133,6 +133,7 @@ export const campaign = pgTable(
     brandName: varchar("brandName", { length: 255 }),
     brandImage: varchar("brandImage", { length: 1024 }),
     campaignImage: varchar("campaignImage", { length: 1024 }),
+    disclosureChecks: jsonb("disclosureChecks").$type<string[]>().notNull().default([]),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   },
@@ -175,6 +176,7 @@ export const creatorProfile = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     platform: varchar("platform", { length: 32 }).notNull(),
     externalId: varchar("externalId", { length: 255 }).notNull(),
+    userId: varchar("userId", { length: 255 }).references(() => user.id, { onDelete: "set null" }),
     handle: varchar("handle", { length: 255 }).notNull(),
     displayName: varchar("displayName", { length: 255 }).notNull(),
     imageUrl: text("imageUrl"),
@@ -192,6 +194,7 @@ export const creatorProfile = pgTable(
     uniqueIndex("creator_profile_platform_external_unique").on(table.platform, table.externalId),
     index("creator_profile_handle_idx").on(table.handle),
     index("creator_profile_platform_idx").on(table.platform),
+    index("creator_profile_userId_idx").on(table.userId),
   ]
 );
 
@@ -297,6 +300,140 @@ export const shortlistItem = pgTable(
     index("shortlist_item_user_idx").on(table.userId),
     index("shortlist_item_group_idx").on(table.groupId),
   ]
+);
+
+export const brandProfile = pgTable("brand_profile", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("userId", { length: 255 })
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  companyName: varchar("companyName", { length: 255 }).notNull(),
+  logoUrl: varchar("logoUrl", { length: 1024 }),
+  category: varchar("category", { length: 128 }),
+  website: varchar("website", { length: 1024 }),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+}, (table) => [uniqueIndex("brand_profile_user_unique").on(table.userId)]);
+
+export const influencerProfile = pgTable("influencer_profile", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: varchar("userId", { length: 255 })
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  bio: text("bio").notNull().default(""),
+  niches: jsonb("niches").$type<string[]>().notNull().default([]),
+  location: varchar("location", { length: 128 }),
+  rates: jsonb("rates").$type<{ story?: string; reel?: string; post?: string }>().notNull().default({}),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+}, (table) => [uniqueIndex("influencer_profile_user_unique").on(table.userId)]);
+
+export const notification = pgTable(
+  "notification",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: varchar("userId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: varchar("type", { length: 64 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    body: text("body").notNull(),
+    href: varchar("href", { length: 1024 }),
+    readAt: timestamp("readAt"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [index("notification_user_created_idx").on(table.userId, table.createdAt)]
+);
+
+export const campaignInvite = pgTable(
+  "campaign_invite",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaignId: uuid("campaignId")
+      .notNull()
+      .references(() => campaign.id, { onDelete: "cascade" }),
+    brandId: varchar("brandId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    creatorId: uuid("creatorId")
+      .notNull()
+      .references(() => creatorProfile.id, { onDelete: "cascade" }),
+    influencerId: varchar("influencerId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: varchar("status", { length: 32 }).notNull().default("pending"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("campaign_invite_campaign_influencer_unique").on(table.campaignId, table.influencerId),
+    index("campaign_invite_influencer_idx").on(table.influencerId),
+  ]
+);
+
+export const submission = pgTable(
+  "submission",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    applicationId: uuid("applicationId")
+      .notNull()
+      .references(() => application.id, { onDelete: "cascade" }),
+    kind: varchar("kind", { length: 16 }).notNull(),
+    url: text("url"),
+    storageKey: text("storageKey"),
+    note: text("note"),
+    revisionNote: text("revisionNote"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [index("submission_application_idx").on(table.applicationId)]
+);
+
+export const rating = pgTable(
+  "rating",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    applicationId: uuid("applicationId")
+      .notNull()
+      .references(() => application.id, { onDelete: "cascade" }),
+    raterId: varchar("raterId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    rateeId: varchar("rateeId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    score: integer("score").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("rating_application_rater_unique").on(table.applicationId, table.raterId)]
+);
+
+export const conversation = pgTable(
+  "conversation",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    applicationId: uuid("applicationId")
+      .notNull()
+      .references(() => application.id, { onDelete: "cascade" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("conversation_application_unique").on(table.applicationId)]
+);
+
+export const message = pgTable(
+  "message",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    conversationId: uuid("conversationId")
+      .notNull()
+      .references(() => conversation.id, { onDelete: "cascade" }),
+    senderId: varchar("senderId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [index("message_conversation_created_idx").on(table.conversationId, table.createdAt)]
 );
 
 export const userRelations = relations(user, ({ many }) => ({

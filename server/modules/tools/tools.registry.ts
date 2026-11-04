@@ -7,6 +7,7 @@ import {
   compareCreatorsInputSchema,
   creatorMatchQuerySchema,
   creatorSyncPayloadSchema,
+  inviteCreateSchema,
   marketplaceSearchInputSchema,
   roiToolInputSchema,
   shortlistAddSchema,
@@ -127,7 +128,13 @@ export async function invokeTool(
       return handlers.publicInsights();
     case "messages.status":
       toolInputSchemas["messages.status"].parse(rawInput ?? {});
-      return handlers.messagingStatus();
+      return handlers.messagingStatus(ctx.userId);
+    case "invites.create":
+      return handlers.createInviteFromTool(
+        ctx.userId,
+        inviteCreateSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
     default: {
       const _exhaustive: never = name;
       return _exhaustive;

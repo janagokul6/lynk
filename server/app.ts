@@ -20,6 +20,13 @@ import { toolsRouter } from "./modules/tools/tools.routes.js";
 import { applicationsRouter } from "./modules/applications/applications.routes.js";
 import { shortlistRouter } from "./modules/shortlist/shortlist.routes.js";
 import { homeRouter } from "./modules/home/home.routes.js";
+import { profilesRouter } from "./modules/profiles/profiles.routes.js";
+import { notificationsRouter } from "./modules/notifications/notifications.routes.js";
+import { invitesRouter } from "./modules/invites/invites.routes.js";
+import { collabRouter } from "./modules/collab/collab.routes.js";
+import { messagesRouter } from "./modules/messages/messages.routes.js";
+import { adminRouter } from "./modules/admin/admin.routes.js";
+import { configRouter, devRouter } from "./modules/config/config.routes.js";
 
 const app = express();
 
@@ -52,6 +59,8 @@ app.use(
 );
 
 app.use("/api/health", healthRouter);
+app.use("/api/config", configRouter);
+app.use("/api/dev", devRouter);
 app.use("/api", authRouter);
 app.use("/api/discovery", discoveryRouter);
 app.use("/api/campaigns", campaignsRouter);
@@ -63,6 +72,12 @@ app.use("/api/creators", creatorsRouter);
 app.use("/api/connections", connectionsRouter);
 app.use("/api/storage", storageRouter);
 app.use("/api/tools", toolsRouter);
+app.use("/api/profiles", profilesRouter);
+app.use("/api/notifications", notificationsRouter);
+app.use("/api/invites", invitesRouter);
+app.use("/api/collab", collabRouter);
+app.use("/api/messages", messagesRouter);
+app.use("/api/admin", adminRouter);
 
 app.use(errorHandler);
 

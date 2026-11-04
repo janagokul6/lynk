@@ -46,6 +46,7 @@ export interface Campaign {
   brandName: string | null;
   brandImage: string | null;
   campaignImage: string | null;
+  disclosureChecks?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +77,7 @@ export interface CreateCampaignPayload {
   brandName?: string;
   brandImage?: string;
   campaignImage?: string;
+  disclosureChecks?: string[];
 }
 
 export interface CampaignSummary {
@@ -116,7 +118,7 @@ export interface MarketplaceCampaign {
   brandImage: string;
   campaignImage: string;
   verified: boolean;
-  matchScore: number;
+  matchScore: number | null;
   compensation: string;
   compensationExtra?: string;
   deliverable: string;

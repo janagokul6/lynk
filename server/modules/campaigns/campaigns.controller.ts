@@ -1,4 +1,7 @@
 import type { Request, Response } from "express";
+import { eq } from "drizzle-orm";
+import { db } from "../../lib/db.js";
+import { brandProfile } from "../../db/schema.js";
 import * as service from "./campaigns.service.js";
 import {
   createCampaignBodySchema,
@@ -38,6 +41,7 @@ function rowToJson(row: service.CampaignRow) {
     brandName: row.brandName,
     brandImage: row.brandImage,
     campaignImage: row.campaignImage,
+    disclosureChecks: row.disclosureChecks ?? [],
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -71,6 +75,15 @@ export async function create(req: ReqWithUserId, res: Response): Promise<void> {
     return;
   }
   const data = parsed.data;
+  let brandName = data.brandName?.trim() || undefined;
+  if (!brandName) {
+    const [profile] = await db
+      .select({ companyName: brandProfile.companyName })
+      .from(brandProfile)
+      .where(eq(brandProfile.userId, userId))
+      .limit(1);
+    brandName = profile?.companyName;
+  }
   try {
     const row = await service.createCampaign({
       userId,
@@ -96,9 +109,10 @@ export async function create(req: ReqWithUserId, res: Response): Promise<void> {
       applicationDeadline: data.applicationDeadline,
       startDate: data.startDate,
       endDate: data.endDate,
-      brandName: data.brandName,
+      brandName,
       brandImage: data.brandImage || undefined,
       campaignImage: data.campaignImage || undefined,
+      disclosureChecks: data.disclosureChecks,
     });
     res.status(201).json(rowToJson(row));
   } catch {

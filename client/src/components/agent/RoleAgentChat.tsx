@@ -11,7 +11,6 @@ import {
   ConfirmToolCard,
   CreatorMatchWithActions,
   RoiEstimateCard,
-  UnavailableCard,
 } from "./generative";
 import { HomeViewToggle } from "@/components/home/HomeViewToggle";
 import type { HomeView } from "@/lib/home-view";
@@ -186,9 +185,21 @@ export function RoleAgentChat({
   useCopilotAction({
     name: "messages_status",
     available: "disabled",
-    render: ({ result }) => (
-      <UnavailableCard message={(result as { message?: string } | undefined)?.message ?? "Messaging is not available yet."} />
-    ),
+    render: ({ result }) => {
+      const data = result as { message?: string; threads?: { id: string; title: string; withName: string }[] } | undefined;
+      return (
+        <div className="rounded-xl border border-border bg-white p-3 text-sm dark:bg-surface-dark">
+          <p>{data?.message ?? "No conversations yet."}</p>
+          {data?.threads?.length ? (
+            <ul className="mt-2 space-y-1">
+              {data.threads.map((thread) => (
+                <li key={thread.id}>{thread.title} with {thread.withName}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      );
+    },
   });
 
   return (

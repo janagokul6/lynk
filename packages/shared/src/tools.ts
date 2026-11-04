@@ -23,6 +23,7 @@ export const toolNames = [
   "applications.withdraw",
   "insights.public",
   "messages.status",
+  "invites.create",
 ] as const;
 export type ToolName = (typeof toolNames)[number];
 
@@ -48,7 +49,8 @@ export const toolDescriptions: Record<ToolName, string> = {
   "applications.apply": "Apply to a live campaign after the user confirms",
   "applications.withdraw": "Withdraw the signed-in influencer's pending application after confirmation",
   "insights.public": "Public marketplace aggregates only. Never another creator's private data",
-  "messages.status": "Report whether messaging is available",
+  "messages.status": "List message threads on accepted collaborations",
+  "invites.create": "Invite a creator who has a Lynk account onto a campaign the brand owns, after confirmation",
 };
 
 export const toolInputSchemas = {

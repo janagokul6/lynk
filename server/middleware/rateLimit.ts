@@ -18,11 +18,14 @@ export function isCredentialAuthPath(path: string): boolean {
   return CREDENTIAL_AUTH_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 }
 
+const limitMessage = { error: "Too many attempts. Try again in a few minutes." };
+
 export const generalLimiter = rateLimit({
   windowMs: env.RATE_LIMIT_WINDOW_MS,
   limit: env.RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
+  message: limitMessage,
 });
 
 export const authLimiter = rateLimit({
@@ -30,6 +33,7 @@ export const authLimiter = rateLimit({
   limit: env.RATE_LIMIT_AUTH_MAX,
   standardHeaders: true,
   legacyHeaders: false,
+  message: limitMessage,
 });
 
 export function rateLimitByRoute(req: Request, res: Response, next: NextFunction): void {

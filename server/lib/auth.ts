@@ -1,9 +1,11 @@
+import { eq } from "drizzle-orm";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db.js";
 import * as schema from "../db/schema.js";
 import { env } from "../config/env.js";
+import { sendMail } from "./mailer.js";
 
 const googleEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 const SELF_SERVE_ROLES = new Set(["brand", "influencer"]);
@@ -27,6 +29,24 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendMail({
+        to: user.email,
+        subject: "Reset your Lynk password",
+        text: `Reset your Lynk password:\n${url}\n\nIf you did not ask for this, you can ignore this email.`,
+      });
+    },
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendMail({
+        to: user.email,
+        subject: "Verify your Lynk email",
+        text: `Verify your email for Lynk:\n${url}`,
+      });
+    },
   },
   trustedOrigins: [env.CLIENT_ORIGIN],
   socialProviders: googleEnabled
@@ -51,6 +71,14 @@ export const auth = betterAuth({
         defaultValue: "free",
         input: false,
       },
+      roleChosenAt: {
+        type: "date",
+        required: false,
+        input: false,
+      },
+    },
+    deleteUser: {
+      enabled: true,
     },
   },
   databaseHooks: {
@@ -58,16 +86,21 @@ export const auth = betterAuth({
       create: {
         before: async (user, context) => {
           const requested = readRequestedRole(context);
-          if (!requested) {
-            return { data: { ...user, role: "brand", plan: "free" } };
-          }
-          if (!SELF_SERVE_ROLES.has(requested)) {
+          const role = requested && SELF_SERVE_ROLES.has(requested) ? requested : requested ? null : "brand";
+          if (!role) {
             throw APIError.from("BAD_REQUEST", {
               code: "INVALID_ROLE",
               message: "Role must be brand or influencer",
             });
           }
-          return { data: { ...user, role: requested, plan: "free" } };
+          return { data: { ...user, role, plan: "free", roleChosenAt: new Date() } };
+        },
+        after: async (created) => {
+          if (!created?.id) return;
+          await db
+            .update(schema.user)
+            .set({ roleChosenAt: new Date() })
+            .where(eq(schema.user.id, created.id));
         },
       },
     },

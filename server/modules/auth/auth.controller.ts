@@ -4,7 +4,15 @@ import { normalizePlan, updateRoleSchema } from "@lynk/shared";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { auth } from "../../lib/auth.js";
 import { db } from "../../lib/db.js";
-import { user } from "../../db/schema.js";
+import {
+  application,
+  brandProfile,
+  campaign,
+  influencerProfile,
+  notification,
+  socialConnection,
+  user,
+} from "../../db/schema.js";
 import type { AuthedRequest } from "../../policies/requireSession.js";
 
 export async function getSession(req: Request, res: Response): Promise<void> {
@@ -81,4 +89,51 @@ export async function updateRole(req: Request, res: Response): Promise<void> {
   }
 
   res.json({ id: row.id, role: row.role, email: row.email, name: row.name });
+}
+
+export async function exportAccount(req: Request, res: Response): Promise<void> {
+  const { userId } = req as AuthedRequest;
+  const [account] = await db.select().from(user).where(eq(user.id, userId)).limit(1);
+  if (!account) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const [brand, influencer, campaigns, applications, connections, notifications] = await Promise.all([
+    db.select().from(brandProfile).where(eq(brandProfile.userId, userId)),
+    db.select().from(influencerProfile).where(eq(influencerProfile.userId, userId)),
+    db.select().from(campaign).where(eq(campaign.userId, userId)),
+    db.select().from(application).where(eq(application.influencerId, userId)),
+    db
+      .select({
+        platform: socialConnection.platform,
+        handle: socialConnection.handle,
+        externalAccountId: socialConnection.externalAccountId,
+      })
+      .from(socialConnection)
+      .where(eq(socialConnection.userId, userId)),
+    db.select({
+      type: notification.type,
+      title: notification.title,
+      body: notification.body,
+      createdAt: notification.createdAt,
+    }).from(notification).where(eq(notification.userId, userId)),
+  ]);
+  res.json({
+    exportedAt: new Date().toISOString(),
+    user: {
+      id: account.id,
+      name: account.name,
+      email: account.email,
+      role: account.role,
+      plan: account.plan,
+      emailVerified: account.emailVerified,
+      createdAt: account.createdAt,
+    },
+    brand: brand[0] ?? null,
+    influencer: influencer[0] ?? null,
+    campaigns,
+    applications,
+    connections,
+    notifications,
+  });
 }

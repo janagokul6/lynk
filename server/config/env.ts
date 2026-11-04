@@ -2,6 +2,12 @@ import { z } from "zod";
 import { productionAgentKeyIssue } from "@lynk/shared";
 import { decodeTokenEncryptionKey } from "../lib/token-key.js";
 
+const emptyToUndefined = (value: unknown) => {
+  if (typeof value !== "string") return value;
+  const trimmed = value.trim();
+  return trimmed.length === 0 ? undefined : trimmed;
+};
+
 const booleanFromEnv = z.preprocess((value) => {
   if (value === undefined || value === "") return false;
   if (value === true || value === "true" || value === "1") return true;
@@ -37,6 +43,13 @@ const envSchema = z.object({
   MATCH_MAX_DISTANCE: z.coerce.number().min(0).max(2).default(0.75),
   TOKEN_ENCRYPTION_KEY: z.string().min(1).optional(),
   ALLOW_CLIENT_SOCIAL_TOKENS: booleanFromEnv.default(false),
+  RESEND_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  SMTP_URL: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  MAIL_FROM: z.string().min(1).default("Lynk <noreply@localhost>"),
+  OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  META_APP_ID: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  META_APP_SECRET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  SENTRY_DSN: z.preprocess(emptyToUndefined, z.string().url().optional()),
 }).superRefine((data, ctx) => {
   if (data.NODE_ENV === "production") {
     const agentKeyIssue = productionAgentKeyIssue(data.AGENT_API_KEY);

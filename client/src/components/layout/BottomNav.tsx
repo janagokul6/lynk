@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Icon } from "@/components/ui/Icon";
+import { AccountLinks } from "@/components/account/AccountLinks";
 import { cn } from "@/lib/utils";
 
 export interface NavItem {
@@ -74,6 +77,9 @@ export function BottomNav({ items, activeTab, logoLabel = "Lynk", logoIcon = "li
             </Link>
           );
         })}
+      </div>
+      <div className="hidden lg:block px-6 pb-6 mt-auto">
+        <AccountLinks />
       </div>
     </nav>
   );

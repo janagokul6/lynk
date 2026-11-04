@@ -31,3 +31,4 @@ export const applyToCampaignTool = tool("applications_apply", "applications.appl
 export const withdrawApplicationTool = tool("applications_withdraw", "applications.withdraw");
 export const publicInsightsTool = tool("insights_public", "insights.public");
 export const messagesStatusTool = tool("messages_status", "messages.status");
+export const createInviteTool = tool("invites_create", "invites.create");

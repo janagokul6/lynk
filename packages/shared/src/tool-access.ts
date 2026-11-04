@@ -28,6 +28,7 @@ export const toolPolicies: Record<ToolName, ToolPolicy> = {
   "applications.withdraw": { roles: ["influencer"], agentKey: false },
   "insights.public": { roles: ["influencer"], agentKey: false },
   "messages.status": { roles: ["brand", "influencer"], agentKey: false },
+  "invites.create": { roles: ["brand"], agentKey: false },
 };
 
 export function toolCallerAllowed(name: ToolName, caller: ToolCaller): boolean {

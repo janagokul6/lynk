@@ -92,7 +92,7 @@ test("influencer chat, apply confirmation, and empty earnings", async ({ page })
   await page.getByTestId("home-view-toggle").click();
   await expect(page.getByRole("heading", { name: "Live campaigns" })).toBeVisible();
   await expect(page.getByText(demoCampaignTitles.playwright).first()).toBeVisible();
-  await expect(page.getByText(/Messaging is not available yet/)).toBeVisible();
+  await expect(page.getByText(/Payouts are not live yet/)).toBeVisible();
   await page.screenshot({ path: path.join(shots, "influencer-dashboard.png"), fullPage: true });
   await page.getByTestId("home-view-toggle").click();
 

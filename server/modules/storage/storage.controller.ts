@@ -2,6 +2,7 @@ import { createReadStream, existsSync } from "node:fs";
 import type { Request, Response } from "express";
 import { z } from "zod";
 import type { AuthedRequest } from "../../policies/requireSession.js";
+import { storageKeyVisible } from "../collab/collab.service.js";
 import {
   contentTypeForKey,
   contentTypeMatchesKey,
@@ -95,7 +96,8 @@ export async function getFile(req: Request, res: Response): Promise<void> {
   }
   const role = (session.user as { role?: string }).role;
   const ownsKey = key === `users/${userId}` || key.startsWith(`users/${userId}/`);
-  if (role !== "admin" && !ownsKey) {
+  const shared = ownsKey ? false : await storageKeyVisible(userId, key);
+  if (role !== "admin" && !ownsKey && !shared) {
     res.status(403).json({ error: "Forbidden" });
     return;
   }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const creatorPlatformSchema = z.enum(["youtube", "instagram"]);
+export const creatorPlatformSchema = z.enum(["youtube", "instagram", "profile"]);
 export type CreatorPlatform = z.infer<typeof creatorPlatformSchema>;
 
 export const creatorProfileSchema = z.object({

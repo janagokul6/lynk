@@ -158,10 +158,10 @@ export function CreatorActionCards({ creators }: { creators: CreatorMatchHit[] }
                   {selected ? (
                     <ConfirmToolCard
                       title={`Invite @${creator.handle}`}
-                      summary={`Add @${creator.handle} to the shortlist group “Invite: ${selected.title}”. Messaging is not available, so they are not notified.`}
-                      tool="shortlist.add"
-                      input={{ creatorId: creator.id, groupName: `Invite: ${selected.title}` }}
-                      confirmLabel="Add to invite group"
+                      summary={`Invite @${creator.handle} to “${selected.title}”. They are notified in the app and by email when they have a Lynk account.`}
+                      tool="invites.create"
+                      input={{ creatorId: creator.id, campaignId: selected.id }}
+                      confirmLabel="Send invite"
                     />
                   ) : null}
                 </>

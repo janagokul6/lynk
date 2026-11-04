@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ShortlistList } from "@lynk/shared";
+import { formatInrBand } from "@lynk/shared";
 import { api } from "@/lib/api";
 
 type CampaignRow = {
@@ -52,7 +53,7 @@ export function BrandDashboardPanel() {
               <li key={campaign.id} className="rounded-xl border border-border bg-white px-4 py-3 dark:bg-surface-dark">
                 <p className="font-semibold text-slate-900 dark:text-white">{campaign.title || campaign.name}</p>
                 <p className="text-xs text-slate-500">
-                  {campaign.status} · {campaign.payMin ?? "—"}–{campaign.payMax ?? "—"}
+                  {campaign.status} · {formatInrBand(campaign.payMin ?? "", campaign.payMax ?? "")}
                 </p>
               </li>
             ))}

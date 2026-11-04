@@ -83,7 +83,7 @@ export function InfluencerDashboardPanel() {
 
       <section className="space-y-3">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">Earnings and messages</h2>
-        <Empty>Earnings are not available yet. Messaging is not available yet.</Empty>
+        <Empty>Payouts are not live yet. Messages open from an accepted collaboration.</Empty>
       </section>
     </div>
   );

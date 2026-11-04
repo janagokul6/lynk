@@ -14,6 +14,7 @@ import { clientEnv } from "@/lib/env";
 import { readHomeView, toggleHomeView, writeHomeView, type HomeView } from "@/lib/home-view";
 import { cn } from "@/lib/utils";
 import { BrandDashboardPanel } from "./BrandDashboardPanel";
+import { AccountLinks } from "@/components/account/AccountLinks";
 import { HomeViewToggle } from "./HomeViewToggle";
 import { InfluencerDashboardPanel } from "./InfluencerDashboardPanel";
 
@@ -144,7 +145,10 @@ export function HomeShell({ role }: { role: "brand" | "influencer" }) {
             {home ? ` · ${home.plan === "pro" ? "Pro · chat and dashboard together on wide screens" : "Free · chat or dashboard"}` : ""}
           </p>
         </div>
-        <HomeViewToggle view={view} onToggle={onToggle} />
+        <div className="flex items-center gap-4">
+          <AccountLinks />
+          <HomeViewToggle view={view} onToggle={onToggle} />
+        </div>
       </header>
       <div className={cn("min-h-[calc(100vh-3.5rem)] pb-20 lg:pb-4", pro && "lg:grid lg:grid-cols-2")}>
         <section className={cn("flex h-[calc(100vh-3.5rem)] min-h-[32rem] flex-col", view === "dashboard" && (pro ? "hidden lg:flex" : "hidden"))}>{chat}</section>

@@ -13,8 +13,11 @@ export const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ error?: string }>) => {
+    const status = error.response?.status;
+    if (status === 401) return Promise.reject(error);
     const message =
       error.response?.data?.error ??
+      (status === 429 ? "Too many attempts. Try again in a few minutes." : undefined) ??
       error.message ??
       "Something went wrong";
     toast.error(message);

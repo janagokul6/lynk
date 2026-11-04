@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -10,12 +10,21 @@ import { APP_NAME } from "@/lib/constants";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { homePathForRole } from "@lynk/shared";
+import { API_BASE_URL } from "@/lib/constants";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
+  const [google, setGoogle] = useState(false);
+
+  useEffect(() => {
+    void fetch(`${API_BASE_URL}/api/config`)
+      .then((response) => response.json())
+      .then((body: { googleLogin?: boolean }) => setGoogle(Boolean(body.googleLogin)))
+      .catch(() => setGoogle(false));
+  }, []);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,6 +71,24 @@ export default function LoginPage() {
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Signing in…" : "Sign in"}
         </Button>
+        {google ? (
+          <Button
+            type="button"
+            className="w-full"
+            onClick={() => {
+              void authClient.signIn.social({ provider: "google", callbackURL: window.location.origin });
+            }}
+          >
+            Continue with Google
+          </Button>
+        ) : (
+          <p className="text-xs text-slate-500">Google sign-in is not configured.</p>
+        )}
+        <p className="text-sm">
+          <Link href="/forgot-password" className="text-primary font-semibold">
+            Forgot password
+          </Link>
+        </p>
         <p className="text-sm text-slate-500">
           New here?{" "}
           <Link href="/signup" className="text-primary font-semibold">
