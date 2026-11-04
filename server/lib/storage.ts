@@ -13,7 +13,7 @@ export type SignedUpload = {
 
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 
-export const ALLOWED_CONTENT_TYPES: Record<string, readonly string[]> = {
+const ALLOWED_CONTENT_TYPES: Record<string, readonly string[]> = {
   "image/jpeg": [".jpg", ".jpeg"],
   "image/png": [".png"],
   "image/webp": [".webp"],
@@ -53,7 +53,7 @@ export function contentTypeForKey(key: string): string {
   return match?.type ?? "application/octet-stream";
 }
 
-export function isR2Configured(): boolean {
+function isR2Configured(): boolean {
   return Boolean(
     env.R2_ACCOUNT_ID && env.R2_ACCESS_KEY_ID && env.R2_SECRET_ACCESS_KEY && env.R2_BUCKET
   );
@@ -160,13 +160,5 @@ export async function saveLocalUpload(key: string, body: Buffer): Promise<string
   }
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, body);
-  return path;
-}
-
-export function localUploadPath(key: string): string {
-  const path = resolveLocalUpload(key);
-  if (!path) {
-    throw new Error("Invalid upload key");
-  }
   return path;
 }

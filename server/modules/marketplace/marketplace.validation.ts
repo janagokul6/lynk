@@ -43,5 +43,3 @@ export const marketplaceQuerySchema = z.object({
   limit: optionalBoundedInt(1, 100),
   offset: optionalBoundedInt(0, 100_000),
 });
-
-export type MarketplaceQuery = z.infer<typeof marketplaceQuerySchema>;

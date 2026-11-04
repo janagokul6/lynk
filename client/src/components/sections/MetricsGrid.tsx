@@ -1,7 +1,7 @@
 import { StatCard } from "@/components/cards/StatCard";
 import { cn } from "@/lib/utils";
 
-export interface Metric {
+interface Metric {
   icon: string;
   label: string;
   value: string;

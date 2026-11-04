@@ -18,7 +18,7 @@ type MetaResponse = {
   error?: { message?: string; code?: number };
 };
 
-export function metaConfigured(): boolean {
+function metaConfigured(): boolean {
   return Boolean(env.META_IG_USER_ID && env.META_PAGE_ACCESS_TOKEN);
 }
 

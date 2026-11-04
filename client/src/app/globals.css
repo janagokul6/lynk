@@ -34,33 +34,6 @@
   --color-surface-hover: #f1f5f9;
   --color-surface-subtle: #f1f5f9;
   --color-border-subtle: #e2e8f0;
-
-  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-spin-slow: spin 4s linear infinite;
-  --animate-float: float 3s ease-in-out infinite;
-  --animate-shimmer: shimmer 1.5s infinite linear;
-
-  @keyframes float {
-
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-
-    100% {
-      background-position: 1000px 0;
-    }
-  }
 }
 
 @utility pb-safe {

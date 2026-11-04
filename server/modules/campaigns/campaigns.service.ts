@@ -4,7 +4,7 @@ import { db } from "../../lib/db.js";
 import { campaign } from "../../db/schema.js";
 
 export type CampaignRow = typeof campaign.$inferSelect;
-export type CampaignInsert = typeof campaign.$inferInsert;
+type CampaignInsert = typeof campaign.$inferInsert;
 export type { CampaignStatus };
 
 export interface CreateCampaignInput {
@@ -148,8 +148,4 @@ export async function publishCampaign(id: string, userId: string): Promise<Campa
     .where(and(eq(campaign.id, id), eq(campaign.userId, userId)))
     .returning();
   return row ?? null;
-}
-
-export function isOwner(row: CampaignRow, userId: string): boolean {
-  return row.userId === userId;
 }
