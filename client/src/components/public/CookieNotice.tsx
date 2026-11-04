@@ -13,7 +13,7 @@ export function CookieNotice() {
       <p>Lynk uses a session cookie to keep you signed in. See the privacy page for what else is stored.</p>
       <button
         type="button"
-        className="rounded-lg bg-primary px-3 py-2 font-bold text-white"
+        className="rounded-lg bg-primary-500 px-3 py-2 font-bold text-white"
         onClick={() => {
           window.localStorage.setItem("lynk-cookie", "1");
           setVisible(false);

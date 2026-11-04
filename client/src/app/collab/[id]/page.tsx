@@ -130,7 +130,7 @@ export default function CollabPage() {
               <input className="w-full rounded-xl border border-border px-3 py-2" placeholder="Link to the draft" value={url} onChange={(event) => setUrl(event.target.value)} />
               <textarea className="w-full rounded-xl border border-border px-3 py-2" placeholder="Note" value={note} onChange={(event) => setNote(event.target.value)} />
               <div className="flex gap-2">
-                <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Send link</button>
+                <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Send link</button>
                 <label className="rounded-xl border border-border px-4 py-2 text-sm font-bold">
                   Upload file
                   <input className="hidden" type="file" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadFile(file); }} />
@@ -140,7 +140,7 @@ export default function CollabPage() {
           ) : null}
           {collab.role === "brand" && collab.application.status === "submitted" ? (
             <div className="space-y-2">
-              <button type="button" className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" onClick={() => void act("approve")}>Approve content</button>
+              <button type="button" className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" onClick={() => void act("approve")}>Approve content</button>
               <form className="flex gap-2" onSubmit={(event) => { event.preventDefault(); void act("revision", { note: revision }); }}>
                 <input className="flex-1 rounded-xl border border-border px-3 py-2" placeholder="What should change?" value={revision} onChange={(event) => setRevision(event.target.value)} required />
                 <button className="rounded-xl border border-border px-4 py-2 text-sm font-bold" type="submit">Request revision</button>
@@ -151,7 +151,7 @@ export default function CollabPage() {
             <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); void act("proof", { url }); }}>
               <h2 className="font-semibold">Proof of posting</h2>
               <input className="w-full rounded-xl border border-border px-3 py-2" placeholder="Live post URL" value={url} onChange={(event) => setUrl(event.target.value)} required />
-              <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Mark complete</button>
+              <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Mark complete</button>
             </form>
           ) : null}
           {collab.application.status === "completed" ? (
@@ -164,7 +164,7 @@ export default function CollabPage() {
                 <form className="space-y-2" onSubmit={(event) => { event.preventDefault(); void act("ratings", { score, comment }); }}>
                   <input type="number" min={1} max={5} value={score} onChange={(event) => setScore(Number(event.target.value))} className="w-24 rounded-xl border border-border px-3 py-2" />
                   <textarea className="w-full rounded-xl border border-border px-3 py-2" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Optional comment" />
-                  <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Submit rating</button>
+                  <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Submit rating</button>
                 </form>
               )}
             </section>

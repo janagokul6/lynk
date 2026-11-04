@@ -32,7 +32,7 @@ export default function InvitesPage() {
               <p className="text-sm uppercase text-slate-500">{invite.status}</p>
               {invite.status === "pending" ? (
                 <div className="mt-2 flex gap-2">
-                  <button type="button" className="rounded-lg bg-primary px-3 py-2 text-sm font-bold text-white" onClick={() => void api.post(`/api/invites/${invite.id}/accept`).then((response) => {
+                  <button type="button" className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-bold text-white" onClick={() => void api.post(`/api/invites/${invite.id}/accept`).then((response) => {
                     const id = (response.data as { applicationId?: string }).applicationId;
                     if (id) router.push(`/collab/${id}`);
                     else void load();

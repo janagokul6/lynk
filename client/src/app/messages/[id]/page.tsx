@@ -56,14 +56,14 @@ export default function ThreadPage() {
       <div className="mt-4 flex-1 space-y-2">
         {thread?.messages.length === 0 ? <p className="text-sm text-slate-500">No messages yet.</p> : null}
         {thread?.messages.map((message) => (
-          <p key={message.id} className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${message.senderId === me ? "ml-auto bg-primary text-white" : "bg-slate-100 dark:bg-slate-800"}`}>
+          <p key={message.id} className={`max-w-[80%] rounded-xl px-3 py-2 text-sm ${message.senderId === me ? "ml-auto bg-primary-500 text-white" : "bg-slate-100 dark:bg-slate-800"}`}>
             {message.body}
           </p>
         ))}
       </div>
       <form className="mt-4 flex gap-2" onSubmit={(event) => void send(event)}>
         <input className="flex-1 rounded-xl border border-border px-3 py-2" value={body} onChange={(event) => setBody(event.target.value)} placeholder="Write a message" />
-        <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Send</button>
+        <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Send</button>
       </form>
     </main>
   );

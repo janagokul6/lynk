@@ -194,7 +194,7 @@ export default function EditCampaignPage() {
                 Save
               </button>
               {campaign.status === "draft" ? (
-                <button type="button" disabled={saving} className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" onClick={() => void save(true)}>
+                <button type="button" disabled={saving} className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" onClick={() => void save(true)}>
                   Publish to marketplace
                 </button>
               ) : null}

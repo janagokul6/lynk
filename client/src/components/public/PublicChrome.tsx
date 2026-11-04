@@ -13,7 +13,7 @@ export function PublicChrome({ children }: { children: React.ReactNode }) {
             <Link href="/faq">FAQ</Link>
             <Link href="/about">About</Link>
             <Link href="/login">Log in</Link>
-            <Link href="/signup" className="rounded-lg bg-primary px-3 py-2 text-white">Sign up</Link>
+            <Link href="/signup" className="rounded-lg bg-primary-500 px-3 py-2 text-white">Sign up</Link>
           </nav>
         </div>
       </header>

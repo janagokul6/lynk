@@ -56,7 +56,7 @@ export default function BrandOnboardingPage() {
           <input className="mt-1 w-full rounded-xl border border-border px-3 py-2" value={website} onChange={(event) => setWebsite(event.target.value)} placeholder="https://" />
         </label>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
-        <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Save and continue</button>
+        <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Save and continue</button>
       </form>
     </main>
   );

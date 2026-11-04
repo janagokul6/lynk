@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
           Email
           <input type="email" required className="mt-1 w-full rounded-xl border border-border px-3 py-2" value={email} onChange={(event) => setEmail(event.target.value)} />
         </label>
-        <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Send reset link</button>
+        <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Send reset link</button>
       </form>
       {message ? <p className="text-sm">{message}</p> : null}
       <Link href="/login" className="text-sm font-semibold text-primary">Back to log in</Link>

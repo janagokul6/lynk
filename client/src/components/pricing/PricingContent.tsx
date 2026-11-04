@@ -13,7 +13,7 @@ export function PricingContent() {
         <article className="rounded-2xl border border-border p-5">
           <h2 className="text-xl font-bold">Free</h2>
           <p className="mt-2 text-sm">Campaigns, applications, messages, profiles, and the assistant, within the server’s request limits.</p>
-          <Link href="/signup" className="mt-4 inline-block rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white">Create a free account</Link>
+          <Link href="/signup" className="mt-4 inline-block rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white">Create a free account</Link>
         </article>
         <article className="rounded-2xl border border-border p-5">
           <h2 className="text-xl font-bold">Pro</h2>

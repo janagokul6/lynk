@@ -221,7 +221,7 @@ export function RoleAgentChat({
             initial:
               role === "brand"
                 ? "Ask me to find creators, review applicants, or draft a campaign. I won’t publish anything until you confirm."
-                : "Ask me which campaigns fit you, or what’s pending on your applications. Messaging isn’t available yet.",
+                : "Ask me which campaigns fit you, or what’s pending. Messages open after a collaboration is accepted.",
             placeholder: role === "brand" ? "Find creators or draft a campaign…" : "Search live campaigns…",
           }}
         />

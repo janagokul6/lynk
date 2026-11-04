@@ -67,7 +67,7 @@ export default function BrandProfilePage() {
             Website
             <input className="mt-1 w-full rounded-xl border border-border px-3 py-2" value={profile.website ?? ""} onChange={(event) => setProfile({ ...profile, website: event.target.value })} />
           </label>
-          <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Save</button>
+          <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Save</button>
         </form>
         {message ? <p className="text-sm">{message}</p> : null}
         <Link href="/settings" className="text-sm font-semibold text-primary">Account settings</Link>

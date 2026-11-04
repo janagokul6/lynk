@@ -72,7 +72,7 @@ export default function InfluencerProfilePage() {
               </label>
             ))}
           </div>
-          <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Save profile</button>
+          <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Save profile</button>
         </form>
         <section className="space-y-2">
           <h2 className="font-semibold">Social accounts</h2>

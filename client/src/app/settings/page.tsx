@@ -65,7 +65,7 @@ export default function SettingsPage() {
       >
         <h2 className="font-semibold">Name</h2>
         <input className="w-full rounded-xl border border-border px-3 py-2" value={name} onChange={(event) => setName(event.target.value)} />
-        <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit">Save name</button>
+        <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit">Save name</button>
       </form>
       <form
         className="space-y-2"

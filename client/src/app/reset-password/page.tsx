@@ -29,7 +29,7 @@ export default function ResetPasswordPage() {
           New password
           <input type="password" minLength={8} required className="mt-1 w-full rounded-xl border border-border px-3 py-2" value={password} onChange={(event) => setPassword(event.target.value)} />
         </label>
-        <button className="rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white" type="submit" disabled={!token}>Update password</button>
+        <button className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white" type="submit" disabled={!token}>Update password</button>
       </form>
       {message ? <p className="text-sm">{message}</p> : null}
       <Link href="/login" className="text-sm font-semibold text-primary">Log in</Link>

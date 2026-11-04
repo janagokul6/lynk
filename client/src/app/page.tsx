@@ -10,7 +10,7 @@ export default function PublicHomePage() {
           Lynk is a marketplace for brands and creators. Brands publish campaigns, creators apply, and both sides can message, submit work, and rate a finished collaboration.
         </p>
         <div className="flex gap-3">
-          <Link href="/signup" className="rounded-xl bg-primary px-5 py-3 font-bold text-white">Create an account</Link>
+          <Link href="/signup" className="rounded-xl bg-primary-500 px-5 py-3 font-bold text-white">Create an account</Link>
           <Link href="/login" className="rounded-xl border border-border px-5 py-3 font-bold">Log in</Link>
         </div>
       </section>

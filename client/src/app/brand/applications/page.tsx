@@ -73,7 +73,7 @@ export default function ApplicationReviewPage() {
                 <button
                   type="button"
                   onClick={() => decide(row.id, "accept")}
-                  className="rounded-lg bg-primary px-3 py-2 text-sm font-bold text-white"
+                  className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-bold text-white"
                 >
                   Accept
                 </button>
