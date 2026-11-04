@@ -2,8 +2,8 @@ import { BottomNav } from "../BottomNav";
 import type { NavItem } from "../BottomNav";
 
 const INFLUENCER_NAV_ITEMS: NavItem[] = [
+  { label: "Home", icon: "chat", href: "/influencer/home" },
   { label: "Find", icon: "search", href: "/marketplace" },
-  { label: "Work", icon: "work", href: "/influencer/dashboard" },
   { label: "Profile", icon: "person", href: "/influencer/profile" },
 ];
 

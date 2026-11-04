@@ -36,7 +36,40 @@ pnpm dev
 # pnpm dev:client   # :43123
 ```
 
-Open [http://127.0.0.1:43123/agent](http://127.0.0.1:43123/agent).
+Open [http://127.0.0.1:43123/agent](http://127.0.0.1:43123/agent) for the brand chat shell. After login, brands land on `/brand/home` and creators on `/influencer/home` (chat by default, dashboard via the toggle).
+
+Chat replies need `OPENAI_API_KEY` in `packages/agent/.env`. Without it, `GET /status` on the agent reports `llm: false` and the home shows that message. The dashboard still loads.
+
+`user.plan` is `free` or `pro` (default `free`). Pro turns on the wide side-by-side layout. There is no billing flow yet.
+
+Per-user agent turn caps: `AGENT_TURN_LIMIT` and `AGENT_TURN_WINDOW_MS` on the server (tool calls) and the agent runtime (CopilotKit turns).
+
+## Verify the signed-in stack
+
+This runs Postgres, migrations, the demo seed, the API, the Mastra runtime with `LYNK_SCRIPT_MODEL=1` (no OpenAI key), and Next.js.
+
+```bash
+# once, with pgvector installed
+createdb lynk || true
+# DATABASE_URL=postgresql://lynk:lynk@127.0.0.1:5432/lynk
+pnpm --filter @lynk/server exec drizzle-kit migrate
+pnpm seed:demo
+
+# terminal 1
+AGENT_TURN_LIMIT=100000 pnpm dev:server
+# terminal 2
+LYNK_SCRIPT_MODEL=1 AGENT_TURN_LIMIT=100000 pnpm dev:agent
+# terminal 3
+pnpm dev:client
+
+pnpm test:agent-loop   # Mastra generate + CopilotKit HTTP for every tool
+pnpm --filter @lynk/client exec playwright install chromium
+pnpm test:e2e          # Playwright. Also starts the three servers if they are down.
+```
+
+`LYNK_SCRIPT_MODEL=1` makes the agent emit the tool named in a `LYNK_TOOL <name> <json>` message. Answer quality still needs a real `OPENAI_API_KEY`.
+
+Screenshots from Playwright land in `/opt/cursor/artifacts/screenshots`.
 
 ## Quality
 
@@ -56,10 +89,12 @@ pnpm test:e2e   # Playwright
 | Storage | `POST /api/storage/sign` (+ local upload fallback or R2) |
 | Tools (agents) | `GET /api/tools`, `POST /api/tools/:name` (`x-agent-key` allowlist, or session) |
 | Applications | `POST /api/applications`, `GET /api/applications`, withdraw / accept / reject |
+| Home | `GET /api/home` (briefing, plan, side-by-side flag) |
+| Shortlist | `GET/POST /api/shortlist`, groups, delete (brand only) |
 | AG-UI | Mastra `/copilotkit` (CopilotKit runtime) |
 
 ## Agentic stack
 
-- **UI:** CopilotKit (AG-UI protocol) at `/agent`
-- **Runtime:** Mastra brand agent in `packages/agent`
-- **Domain:** tools call existing Lynk `/api/tools` (no duplicated business logic)
+- **UI:** CopilotKit (AG-UI protocol) at `/brand/home`, `/influencer/home`, and `/agent`
+- **Runtime:** Mastra brand and influencer agents in `packages/agent`
+- **Domain:** tools call Lynk `/api/tools`. User-scoped calls send the session cookie. `x-agent-key` is limited to `health.check` and `creators.match`.

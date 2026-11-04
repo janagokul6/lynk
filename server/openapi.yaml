@@ -61,7 +61,26 @@ paths:
           required: true
           schema:
             type: string
-            enum: [health.check, creators.match, creators.enqueue_sync]
+            enum:
+              - health.check
+              - creators.match
+              - creators.enqueue_sync
+              - creators.compare
+              - shortlist.list
+              - shortlist.add
+              - shortlist.remove
+              - shortlist.group
+              - roi.estimate
+              - campaigns.preview
+              - campaigns.create
+              - applications.incoming
+              - applications.decide
+              - marketplace.search
+              - applications.mine
+              - applications.apply
+              - applications.withdraw
+              - insights.public
+              - messages.status
       requestBody:
         required: true
         content:
@@ -84,8 +103,37 @@ paths:
           description: Invalid input or tool failure
         "401":
           description: Unauthorized
+        "403":
+          description: Role or agent-key allowlist rejected the tool
         "404":
           description: Unknown tool
+        "429":
+          description: Per-user agent turn limit
+  /api/home:
+    get:
+      summary: Signed-in home briefing
+      description: Role briefing plus plan. sideBySide is true only for plan=pro.
+      operationId: getHome
+      tags: [Home]
+      responses:
+        "200":
+          description: Briefing
+        "401":
+          description: Unauthorized
+        "403":
+          description: Admin has no chat home
+  /api/shortlist:
+    get:
+      summary: Brand shortlist
+      operationId: listShortlist
+      tags: [Shortlist]
+      responses:
+        "200":
+          description: Groups and items owned by the brand
+        "401":
+          description: Unauthorized
+        "403":
+          description: Influencers cannot shortlist
 components:
   securitySchemes:
     AgentKey:

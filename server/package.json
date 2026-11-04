@@ -16,7 +16,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
-    "seed": "tsx scripts/seed-creators.ts"
+    "seed": "tsx scripts/seed-creators.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "@lynk/shared": "workspace:*",

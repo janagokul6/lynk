@@ -45,6 +45,12 @@ export const auth = betterAuth({
         defaultValue: "brand",
         input: false,
       },
+      plan: {
+        type: "string",
+        required: true,
+        defaultValue: "free",
+        input: false,
+      },
     },
   },
   databaseHooks: {
@@ -53,7 +59,7 @@ export const auth = betterAuth({
         before: async (user, context) => {
           const requested = readRequestedRole(context);
           if (!requested) {
-            return { data: { ...user, role: "brand" } };
+            return { data: { ...user, role: "brand", plan: "free" } };
           }
           if (!SELF_SERVE_ROLES.has(requested)) {
             throw APIError.from("BAD_REQUEST", {
@@ -61,7 +67,7 @@ export const auth = betterAuth({
               message: "Role must be brand or influencer",
             });
           }
-          return { data: { ...user, role: requested } };
+          return { data: { ...user, role: requested, plan: "free" } };
         },
       },
     },

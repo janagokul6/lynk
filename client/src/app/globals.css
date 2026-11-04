@@ -172,3 +172,7 @@ input[type="range"].slider-track::-moz-range-track {
     --color-border-subtle: #334155;
   }
 }
+
+[data-testid="copilot-chat-textarea"] {
+  min-height: 2.5rem;
+}

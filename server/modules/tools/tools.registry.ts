@@ -1,17 +1,33 @@
 import {
+  applicationApplySchema,
+  applicationDecideSchema,
+  applicationWithdrawSchema,
   buildToolDescriptors,
+  campaignDraftSchema,
+  compareCreatorsInputSchema,
   creatorMatchQuerySchema,
   creatorSyncPayloadSchema,
+  marketplaceSearchInputSchema,
+  roiToolInputSchema,
+  shortlistAddSchema,
+  shortlistGroupCreateSchema,
+  shortlistRemoveSchema,
   toolInputSchemas,
   type CreatorMatchResult,
   type ToolName,
 } from "@lynk/shared";
 import { domainEvents } from "../../lib/events.js";
 import { enqueueCreatorSync, matchCreators } from "../creators/creators.service.js";
+import * as handlers from "./tools.handlers.js";
 
-export type ToolContext = { userId?: string };
+export type ToolContext = { userId?: string; confirmed?: boolean };
 
 export const toolDescriptors = buildToolDescriptors();
+
+function requireToolUser(ctx: ToolContext): string {
+  if (!ctx.userId) throw new Error("Unauthorized");
+  return ctx.userId;
+}
 
 function toMatchResult(
   rows: Awaited<ReturnType<typeof matchCreators>>
@@ -53,6 +69,65 @@ export async function invokeTool(
       const jobId = await enqueueCreatorSync(input);
       return { jobId };
     }
+    case "creators.compare":
+      return handlers.compareCreators(compareCreatorsInputSchema.parse(rawInput));
+    case "shortlist.list":
+      toolInputSchemas["shortlist.list"].parse(rawInput ?? {});
+      return handlers.shortlistHandlers.list(requireToolUser(ctx));
+    case "shortlist.add":
+      return handlers.shortlistHandlers.add(requireToolUser(ctx), shortlistAddSchema.parse(rawInput));
+    case "shortlist.remove":
+      return handlers.shortlistHandlers.remove(
+        requireToolUser(ctx),
+        shortlistRemoveSchema.parse(rawInput).creatorId
+      );
+    case "shortlist.group":
+      return handlers.shortlistHandlers.group(
+        requireToolUser(ctx),
+        shortlistGroupCreateSchema.parse(rawInput).name
+      );
+    case "roi.estimate":
+      return handlers.estimateBrandRoi(ctx.userId, roiToolInputSchema.parse(rawInput));
+    case "campaigns.preview":
+      return handlers.previewCampaign(campaignDraftSchema.parse(rawInput));
+    case "campaigns.create":
+      return handlers.createCampaignFromTool(
+        ctx.userId,
+        campaignDraftSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "applications.incoming":
+      toolInputSchemas["applications.incoming"].parse(rawInput ?? {});
+      return handlers.incomingApplications(ctx.userId);
+    case "applications.decide":
+      return handlers.decideApplicant(
+        ctx.userId,
+        applicationDecideSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "marketplace.search":
+      return handlers.searchMarketplace(marketplaceSearchInputSchema.parse(rawInput ?? {}));
+    case "applications.mine":
+      toolInputSchemas["applications.mine"].parse(rawInput ?? {});
+      return handlers.myApplications(ctx.userId);
+    case "applications.apply":
+      return handlers.applyToCampaign(
+        ctx.userId,
+        applicationApplySchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "applications.withdraw":
+      return handlers.withdrawOwnApplication(
+        ctx.userId,
+        applicationWithdrawSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "insights.public":
+      toolInputSchemas["insights.public"].parse(rawInput ?? {});
+      return handlers.publicInsights();
+    case "messages.status":
+      toolInputSchemas["messages.status"].parse(rawInput ?? {});
+      return handlers.messagingStatus();
     default: {
       const _exhaustive: never = name;
       return _exhaustive;

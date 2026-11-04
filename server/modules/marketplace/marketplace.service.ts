@@ -31,6 +31,7 @@ export interface MarketplaceCampaignRow {
   listedAt: Date | null;
   applicationDeadline: string | null;
   title: string;
+  description?: string;
 }
 
 function normalizeCompensationType(s: string): string {
@@ -145,6 +146,7 @@ export async function listMarketplaceCampaigns(
       listedAt: campaign.listedAt,
       applicationDeadline: campaign.applicationDeadline,
       title: campaign.title,
+      description: campaign.description,
     })
     .from(campaign)
     .where(and(...conditions))
