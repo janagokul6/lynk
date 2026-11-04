@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
-import { updateRoleSchema } from "@lynk/shared";
+import { normalizePlan, updateRoleSchema } from "@lynk/shared";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { auth } from "../../lib/auth.js";
 import { db } from "../../lib/db.js";
@@ -17,8 +17,17 @@ export async function getSession(req: Request, res: Response): Promise<void> {
   }
 
   const { token: _token, ...sessionFields } = session.session;
+  const [account] = await db
+    .select({ plan: user.plan, role: user.role })
+    .from(user)
+    .where(eq(user.id, session.user.id))
+    .limit(1);
   res.json({
-    user: session.user,
+    user: {
+      ...session.user,
+      role: account?.role ?? session.user.role,
+      plan: normalizePlan(account?.plan),
+    },
     session: sessionFields,
   });
 }

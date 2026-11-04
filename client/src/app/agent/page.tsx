@@ -11,8 +11,8 @@ export default function AgentPage() {
           <span className="text-xs text-slate-500">Brand agent</span>
         </div>
         <nav className="flex items-center gap-3 text-xs font-semibold">
-          <Link href="/brand/dashboard" className="text-slate-600 dark:text-slate-300 hover:text-primary">
-            Dashboard
+          <Link href="/brand/home" className="text-slate-600 dark:text-slate-300 hover:text-primary">
+            Home
           </Link>
           <Link href="/brand/discovery" className="text-slate-600 dark:text-slate-300 hover:text-primary">
             Discovery

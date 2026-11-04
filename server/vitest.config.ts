@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["**/*.test.ts"],
+    exclude: ["e2e/**", "node_modules/**", "dist/**"],
     setupFiles: ["./vitest.setup.ts"],
     fileParallelism: false,
     env: {
@@ -14,6 +15,7 @@ export default defineConfig({
       CLIENT_ORIGIN: "http://localhost:43123",
       RATE_LIMIT_MAX: "100000",
       RATE_LIMIT_AUTH_MAX: "100000",
+      AGENT_TURN_LIMIT: "100000",
       TOKEN_ENCRYPTION_KEY: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       ALLOW_CLIENT_SOCIAL_TOKENS: "true",
     },

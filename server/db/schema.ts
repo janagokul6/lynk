@@ -14,7 +14,7 @@ import {
   customType,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import type { UserRole } from "@lynk/shared";
+import type { UserPlan, UserRole } from "@lynk/shared";
 
 const vector1536 = customType<{ data: number[]; driverData: string }>({
   dataType() {
@@ -42,6 +42,7 @@ export const user = pgTable(
     emailVerified: boolean("emailVerified").notNull(),
     image: varchar("image", { length: 255 }),
     role: varchar("role", { length: 32 }).$type<UserRole>().notNull().default("brand"),
+    plan: varchar("plan", { length: 16 }).$type<UserPlan>().notNull().default("free"),
     roleChosenAt: timestamp("roleChosenAt"),
     createdAt: timestamp("createdAt").notNull(),
     updatedAt: timestamp("updatedAt").notNull(),
@@ -238,16 +239,99 @@ export const paymentIntent = pgTable(
   ]
 );
 
+export const application = pgTable(
+  "application",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaignId: uuid("campaignId")
+      .notNull()
+      .references(() => campaign.id, { onDelete: "cascade" }),
+    influencerId: varchar("influencerId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: varchar("status", { length: 32 }).notNull().default("pending"),
+    message: text("message"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("application_campaign_influencer_unique").on(table.campaignId, table.influencerId),
+    index("application_campaign_idx").on(table.campaignId),
+    index("application_influencer_idx").on(table.influencerId),
+    index("application_status_idx").on(table.status),
+  ]
+);
+
+export const shortlistGroup = pgTable(
+  "shortlist_group",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: varchar("userId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 80 }).notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("shortlist_group_user_name_unique").on(table.userId, table.name),
+    index("shortlist_group_user_idx").on(table.userId),
+  ]
+);
+
+export const shortlistItem = pgTable(
+  "shortlist_item",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: varchar("userId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    creatorId: uuid("creatorId")
+      .notNull()
+      .references(() => creatorProfile.id, { onDelete: "cascade" }),
+    groupId: uuid("groupId").references(() => shortlistGroup.id, { onDelete: "set null" }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("shortlist_item_user_creator_unique").on(table.userId, table.creatorId),
+    index("shortlist_item_user_idx").on(table.userId),
+    index("shortlist_item_group_idx").on(table.groupId),
+  ]
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   campaigns: many(campaign),
   socialConnections: many(socialConnection),
   payoutAccounts: many(payoutAccount),
+  applications: many(application),
+  shortlistGroups: many(shortlistGroup),
+  shortlistItems: many(shortlistItem),
 }));
 
-export const campaignRelations = relations(campaign, ({ one }) => ({
+export const shortlistGroupRelations = relations(shortlistGroup, ({ one, many }) => ({
+  user: one(user, { fields: [shortlistGroup.userId], references: [user.id] }),
+  items: many(shortlistItem),
+}));
+
+export const shortlistItemRelations = relations(shortlistItem, ({ one }) => ({
+  user: one(user, { fields: [shortlistItem.userId], references: [user.id] }),
+  creator: one(creatorProfile, {
+    fields: [shortlistItem.creatorId],
+    references: [creatorProfile.id],
+  }),
+  group: one(shortlistGroup, { fields: [shortlistItem.groupId], references: [shortlistGroup.id] }),
+}));
+
+export const campaignRelations = relations(campaign, ({ one, many }) => ({
   user: one(user, { fields: [campaign.userId], references: [user.id] }),
+  applications: many(application),
+}));
+
+export const applicationRelations = relations(application, ({ one }) => ({
+  campaign: one(campaign, { fields: [application.campaignId], references: [campaign.id] }),
+  influencer: one(user, { fields: [application.influencerId], references: [user.id] }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

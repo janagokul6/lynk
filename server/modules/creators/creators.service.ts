@@ -5,6 +5,7 @@ import {
   type CreatorPlatform,
   type CreatorSyncPayload,
 } from "@lynk/shared";
+import { env } from "../../config/env.js";
 import { db } from "../../lib/db.js";
 import { creatorProfile } from "../../db/schema.js";
 import { embedText, vectorLiteral } from "../../lib/embedding.js";
@@ -118,11 +119,12 @@ export async function matchCreators(query: CreatorMatchQuery): Promise<CreatorRo
 
   if (textForEmbed) {
     const vector = vectorLiteral(embedText(textForEmbed));
+    const distance = sql`${creatorProfile.embedding} <=> ${vector}::vector`;
     const semantic = await db
       .select()
       .from(creatorProfile)
-      .where(whereSql)
-      .orderBy(sql`${creatorProfile.embedding} <=> ${vector}::vector`)
+      .where(and(whereSql, sql`${distance} <= ${env.MATCH_MAX_DISTANCE}`))
+      .orderBy(distance)
       .limit(limit);
 
     if (semantic.length > 0) return semantic;

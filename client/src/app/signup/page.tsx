@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { UserRole } from "@lynk/shared";
-import { USER_ROLES } from "@lynk/shared";
+import { USER_ROLES, homePathForRole } from "@lynk/shared";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -34,7 +34,7 @@ export default function SignupPage() {
       return;
     }
     toast.success("Account created");
-    router.push(role === "influencer" ? "/influencer/dashboard" : "/brand/dashboard");
+    router.push(homePathForRole(role));
   }
 
   return (

@@ -25,7 +25,8 @@ server
 - Socket.IO stays off the boot path until messaging is in scope.
 - External social APIs (YouTube/Meta) run in providers + workers; HTTP handlers call services only.
 - Agent-facing capabilities go through `modules/tools` with `requireAgentOrSession` (session cookie or `x-agent-key`).
-- New LLM/agent behavior lives in `packages/agent` (Mastra on port 43126). UI chat lives under `client` with CopilotKit (`/agent`).
+- New LLM/agent behavior lives in `packages/agent` (Mastra on port 43126). UI chat lives under `client` with CopilotKit (`/brand/home`, `/influencer/home`, `/agent`).
+- User-scoped agent tools call Lynk with the session cookie. `x-agent-key` stays on the public allowlist only. Role checks live on the tool routes.
 - Generative UI for tools belongs next to the chat surface (`client/src/components/agent/*`), not inside Mastra.
 - Prefer extending an existing module over adding a new top-level folder.
 

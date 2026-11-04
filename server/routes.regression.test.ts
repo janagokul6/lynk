@@ -263,3 +263,54 @@ describe("social connections", () => {
     expect(stored.rows[0]?.accessToken.startsWith("v1.")).toBe(true);
   });
 });
+
+describe("agent tool access", () => {
+  it("lets the agent key match creators and refuses sync", async () => {
+    const key = process.env.AGENT_API_KEY ?? "lynk-dev-agent-key-16";
+    const match = await request(app)
+      .post("/api/tools/creators.match")
+      .set("x-agent-key", key)
+      .send({ q: "beauty" });
+    expect(match.status).toBe(200);
+
+    const sync = await request(app)
+      .post("/api/tools/creators.enqueue_sync")
+      .set("x-agent-key", key)
+      .send({ platform: "youtube", externalId: "agent-key-denied", handle: "nope" });
+    expect(sync.status).toBe(403);
+
+    const listed = await request(app).get("/api/tools").set("x-agent-key", key);
+    expect(listed.status).toBe(200);
+    const names = (listed.body.tools as Array<{ name: string }>).map((tool) => tool.name);
+    expect(names).toContain("creators.match");
+    expect(names).not.toContain("creators.enqueue_sync");
+  });
+
+  it("requires a brand or admin session to enqueue sync", async () => {
+    const influencer = request.agent(app);
+    const influencerEmail = `tool-inf-${Date.now()}@example.com`;
+    const influencerSignup = await influencer
+      .post("/api/auth/sign-up/email")
+      .set("Origin", ORIGIN)
+      .send({ name: "Tool Inf", email: influencerEmail, password: "password123", role: "influencer" });
+    expect(influencerSignup.status).toBe(200);
+    const denied = await influencer
+      .post("/api/tools/creators.enqueue_sync")
+      .set("Origin", ORIGIN)
+      .send({ platform: "youtube", externalId: "inf-sync", handle: "inf" });
+    expect(denied.status).toBe(403);
+
+    const brand = request.agent(app);
+    const brandEmail = `tool-brand-${Date.now()}@example.com`;
+    const brandSignup = await brand
+      .post("/api/auth/sign-up/email")
+      .set("Origin", ORIGIN)
+      .send({ name: "Tool Brand", email: brandEmail, password: "password123", role: "brand" });
+    expect(brandSignup.status).toBe(200);
+    const allowed = await brand
+      .post("/api/tools/creators.enqueue_sync")
+      .set("Origin", ORIGIN)
+      .send({ platform: "youtube", externalId: "brand-sync", handle: "brand" });
+    expect(allowed.status).toBe(202);
+  });
+});

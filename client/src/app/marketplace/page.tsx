@@ -3,6 +3,7 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Icon } from "@/components/ui/Icon";
 import { api } from "@/lib/api";
+import type { ApplicationRecord } from "@lynk/shared";
 import type { MarketplaceCampaign } from "@/types";
 import {
   CATEGORIES,
@@ -19,7 +20,9 @@ import {
   type SortOption,
   type WorkType,
 } from "@/types";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { AxiosError } from "axios";
 
 const PAY_BANDS = [
   { label: "Under ₹500", min: 0, max: 500 },
@@ -41,7 +44,114 @@ const DEFAULT_ADVANCED = {
   minMatchScore: 0,
 };
 
+function ApplyControl({
+  campaignId,
+  role,
+  existing,
+  state,
+  open,
+  pitch,
+  error,
+  onOpen,
+  onPitch,
+  onCancel,
+  onSubmit,
+  onWithdraw,
+}: {
+  campaignId: string;
+  role: string | null;
+  existing?: ApplicationRecord;
+  state?: "submitting" | "applied" | "error";
+  open: boolean;
+  pitch: string;
+  error: string | null;
+  onOpen: () => void;
+  onPitch: (value: string) => void;
+  onCancel: () => void;
+  onSubmit: () => void;
+  onWithdraw: (applicationId: string) => void;
+}) {
+  const applied = existing && existing.status !== "withdrawn";
+  if (applied && existing) {
+    return (
+      <div className="space-y-2">
+        <p className="text-sm font-semibold text-text">
+          Applied · {existing.status}
+        </p>
+        {existing.status === "pending" && role === "influencer" && (
+          <button
+            type="button"
+            onClick={() => onWithdraw(existing.id)}
+            className="w-full py-2.5 rounded-lg font-bold text-sm border border-border text-text hover:bg-surface-hover"
+          >
+            Withdraw
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        className="w-full py-2.5 rounded-lg font-bold text-sm bg-primary text-white shadow-lg shadow-primary/25"
+      >
+        Apply Now
+      </button>
+    );
+  }
+
+  if (role !== "influencer") {
+    return (
+      <p className="text-sm text-destructive">{error ?? "Only influencer accounts can apply."}</p>
+    );
+  }
+
+  return (
+    <form
+      className="space-y-2"
+      onSubmit={(event) => {
+        event.preventDefault();
+        onSubmit();
+      }}
+    >
+      <label className="block text-xs font-semibold text-text-muted" htmlFor={`pitch-${campaignId}`}>
+        Short pitch
+      </label>
+      <textarea
+        id={`pitch-${campaignId}`}
+        value={pitch}
+        maxLength={2000}
+        onChange={(event) => onPitch(event.target.value)}
+        placeholder="Why you're a fit for this campaign"
+        className="w-full min-h-20 rounded-lg border border-border bg-surface-subtle px-3 py-2 text-sm text-text"
+      />
+      {state === "error" && error && <p className="text-sm text-destructive">{error}</p>}
+      {state === "applied" && <p className="text-sm font-semibold text-text">Applied</p>}
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={state === "submitting"}
+          className="flex-1 py-2.5 rounded-lg font-bold text-sm bg-primary text-white disabled:opacity-60"
+        >
+          {state === "submitting" ? "Sending…" : "Send application"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-3 py-2.5 rounded-lg text-sm font-semibold text-text-muted"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
 export default function MarketplacePage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [workTypeChips, setWorkTypeChips] = useState<WorkType[]>([]);
   const [sortOption, setSortOption] = useState<SortOption>("Recommended");
@@ -52,7 +162,31 @@ export default function MarketplacePage() {
   const [campaigns, setCampaigns] = useState<MarketplaceCampaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [role, setRole] = useState<string | null>(null);
+  const [myApplications, setMyApplications] = useState<ApplicationRecord[]>([]);
+  const [pitchFor, setPitchFor] = useState<string | null>(null);
+  const [pitch, setPitch] = useState("");
+  const [applyState, setApplyState] = useState<Record<string, "submitting" | "applied" | "error">>({});
+  const [applyError, setApplyError] = useState<string | null>(null);
   const sortRef = useRef<HTMLDivElement>(null);
+
+  const loadMine = useCallback(() => {
+    api
+      .get<ApplicationRecord[]>("/api/applications")
+      .then((res) => setMyApplications(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setMyApplications([]));
+  }, []);
+
+  useEffect(() => {
+    api
+      .get<{ user?: { role?: string } } | null>("/api/me")
+      .then((res) => {
+        const nextRole = res.data?.user?.role ?? null;
+        setRole(nextRole);
+        if (nextRole === "influencer") loadMine();
+      })
+      .catch(() => setRole(null));
+  }, [loadMine]);
 
   const fetchCampaigns = useCallback(() => {
     const params = new URLSearchParams();
@@ -224,6 +358,33 @@ export default function MarketplacePage() {
           </div>
         </div>
 
+        {role === "influencer" && (
+          <section className="rounded-xl border border-border bg-surface p-4 space-y-2">
+            <h2 className="text-sm font-bold text-text">Your applications</h2>
+            {myApplications.length === 0 ? (
+              <p className="text-sm text-text-muted">You have not applied to a campaign yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {myApplications.map((row) => (
+                  <li key={row.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-text">
+                      {row.campaignTitle ?? "Campaign"} · {row.status}
+                    </span>
+                    {row.status === "pending" && (
+                      <button
+                        type="button"
+                        className="font-semibold text-primary"
+                        onClick={() => api.post(`/api/applications/${row.id}/withdraw`).then(() => loadMine())}
+                      >
+                        Withdraw
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
         {fetchError && (
           <p className="text-sm text-destructive">{fetchError}</p>
         )}
@@ -305,11 +466,62 @@ export default function MarketplacePage() {
                 </div>
               </div>
 
-              <button
-                className={`w-full py-2.5 rounded-lg font-bold text-sm transition-colors flex items-center justify-center gap-2 ${campaign.isPrimary ? "bg-primary text-white shadow-lg shadow-primary/25" : "bg-surface-subtle border border-border text-text hover:bg-surface-hover"}`}
-              >
-                {campaign.isPrimary ? "View Details" : "Apply Now"}
-              </button>
+              <ApplyControl
+                campaignId={campaign.id}
+                role={role}
+                existing={myApplications.find((row) => row.campaignId === campaign.id)}
+                state={applyState[campaign.id]}
+                open={pitchFor === campaign.id}
+                pitch={pitch}
+                error={pitchFor === campaign.id ? applyError : null}
+                onOpen={() => {
+                  if (!role) {
+                    router.push("/login");
+                    return;
+                  }
+                  if (role !== "influencer") {
+                    setPitchFor(campaign.id);
+                    setApplyError("Only influencer accounts can apply.");
+                    setApplyState((prev) => ({ ...prev, [campaign.id]: "error" }));
+                    return;
+                  }
+                  setApplyError(null);
+                  setPitch("");
+                  setPitchFor(campaign.id);
+                }}
+                onPitch={setPitch}
+                onCancel={() => {
+                  setPitchFor(null);
+                  setApplyError(null);
+                }}
+                onSubmit={() => {
+                  setApplyState((prev) => ({ ...prev, [campaign.id]: "submitting" }));
+                  setApplyError(null);
+                  api
+                    .post<ApplicationRecord>("/api/applications", {
+                      campaignId: campaign.id,
+                      message: pitch,
+                    })
+                    .then(() => {
+                      setApplyState((prev) => ({ ...prev, [campaign.id]: "applied" }));
+                      setPitchFor(null);
+                      loadMine();
+                    })
+                    .catch((err: AxiosError<{ error?: string }>) => {
+                      const message = err.response?.data?.error ?? "Could not apply";
+                      const already = err.response?.status === 409;
+                      setApplyError(already ? "You already applied to this campaign." : message);
+                      setApplyState((prev) => ({
+                        ...prev,
+                        [campaign.id]: already ? "applied" : "error",
+                      }));
+                      if (already) loadMine();
+                    });
+                }}
+                onWithdraw={(applicationId) => {
+                  api.post(`/api/applications/${applicationId}/withdraw`).then(() => loadMine());
+                }}
+              />
             </div>
           ))}
         </div>
