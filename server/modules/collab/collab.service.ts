@@ -1,18 +1,15 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import type { ApplicationStatus, RatingCreateInput, SubmissionCreateInput } from "@lynk/shared";
-import { env } from "../../config/env.js";
 import { db } from "../../lib/db.js";
+import { isUniqueViolation } from "../../lib/pg-error.js";
 import { notifyUser } from "../../lib/notify.js";
 import { application, campaign, rating, submission, user } from "../../db/schema.js";
+import { isOwnedUploadKey } from "../../lib/storage.js";
 import { getApplicationById, type ApplicationView } from "../applications/applications.service.js";
 
-const COLLAB_STATUSES = new Set<ApplicationStatus>([
-  "accepted",
-  "submitted",
-  "revision",
-  "approved",
-  "completed",
-]);
+export const COLLAB_STATUS_LIST = ["accepted", "submitted", "revision", "approved", "completed"] as const;
+
+const COLLAB_STATUSES = new Set<ApplicationStatus>(COLLAB_STATUS_LIST);
 
 export type CollabParty = {
   application: ApplicationView;
@@ -24,7 +21,7 @@ export async function loadParty(applicationId: string, userId: string): Promise<
   const row = await getApplicationById(applicationId);
   if (!row) return null;
   const [owner] = await db
-    .select({ userId: campaign.userId, disclosureChecks: campaign.disclosureChecks, guidelines: campaign.guidelines })
+    .select({ userId: campaign.userId })
     .from(campaign)
     .where(eq(campaign.id, row.campaignId))
     .limit(1);
@@ -36,6 +33,11 @@ export async function loadParty(applicationId: string, userId: string): Promise<
     return { application: row, role: "influencer", brandId: owner.userId };
   }
   return null;
+}
+
+function withoutEmail(row: ApplicationView) {
+  const { influencerEmail: _email, ...application } = row;
+  return application;
 }
 
 export async function collabDetail(applicationId: string, userId: string) {
@@ -57,7 +59,7 @@ export async function collabDetail(applicationId: string, userId: string) {
     .orderBy(asc(submission.createdAt));
   const ratings = await db.select().from(rating).where(eq(rating.applicationId, applicationId));
   return {
-    application: party.application,
+    application: withoutEmail(party.application),
     role: party.role,
     guidelines: campaignRow?.guidelines ?? null,
     description: campaignRow?.description ?? "",
@@ -82,15 +84,12 @@ export async function collabDetail(applicationId: string, userId: string) {
   };
 }
 
-async function moveStatus(id: string, allowed: ApplicationStatus[], to: ApplicationStatus): Promise<boolean> {
-  const current = await getApplicationById(id);
-  if (!current || !allowed.includes(current.status)) return false;
-  const [updated] = await db
-    .update(application)
-    .set({ status: to, updatedAt: new Date() })
-    .where(and(eq(application.id, id), eq(application.status, current.status)))
-    .returning({ id: application.id });
-  return Boolean(updated);
+function ownedKeyOrError(userId: string, storageKey: string | undefined) {
+  if (!storageKey) return null;
+  if (!isOwnedUploadKey(userId, storageKey)) {
+    return "Upload the file from your own account";
+  }
+  return null;
 }
 
 export async function submitContent(userId: string, applicationId: string, input: SubmissionCreateInput) {
@@ -99,21 +98,31 @@ export async function submitContent(userId: string, applicationId: string, input
   if (!["accepted", "revision"].includes(party.application.status)) {
     return { ok: false as const, status: 409, error: "Content can be submitted after acceptance or a revision request" };
   }
-  await db.insert(submission).values({
-    applicationId,
-    kind: "content",
-    url: input.url ?? null,
-    storageKey: input.storageKey ?? null,
-    note: input.note ?? null,
+  const keyError = ownedKeyOrError(userId, input.storageKey);
+  if (keyError) return { ok: false as const, status: 400, error: keyError };
+  const moved = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(application)
+      .set({ status: "submitted", updatedAt: new Date() })
+      .where(and(eq(application.id, applicationId), inArray(application.status, ["accepted", "revision"])))
+      .returning({ id: application.id });
+    if (!updated) return false;
+    await tx.insert(submission).values({
+      applicationId,
+      kind: "content",
+      url: input.url ?? null,
+      storageKey: input.storageKey ?? null,
+      note: input.note ?? null,
+    });
+    return true;
   });
-  const moved = await moveStatus(applicationId, ["accepted", "revision"], "submitted");
   if (!moved) return { ok: false as const, status: 409, error: "Could not update the application" };
   await notifyUser({
     userId: party.brandId,
     type: "submission.content",
     title: `Content submitted for ${party.application.campaignTitle}`,
     body: `${party.application.influencerName} submitted work for review.`,
-    href: `${env.CLIENT_ORIGIN}/collab/${applicationId}`,
+    href: `/collab/${applicationId}`,
   });
   return { ok: true as const, detail: await collabDetail(applicationId, userId) };
 }
@@ -124,19 +133,27 @@ export async function requestRevision(userId: string, applicationId: string, not
   if (party.application.status !== "submitted") {
     return { ok: false as const, status: 409, error: "A revision can be requested after content is submitted" };
   }
-  await db.insert(submission).values({
-    applicationId,
-    kind: "content",
-    revisionNote: note,
+  const moved = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(application)
+      .set({ status: "revision", updatedAt: new Date() })
+      .where(and(eq(application.id, applicationId), eq(application.status, "submitted")))
+      .returning({ id: application.id });
+    if (!updated) return false;
+    await tx.insert(submission).values({
+      applicationId,
+      kind: "revision",
+      revisionNote: note,
+    });
+    return true;
   });
-  const moved = await moveStatus(applicationId, ["submitted"], "revision");
   if (!moved) return { ok: false as const, status: 409, error: "Could not update the application" };
   await notifyUser({
     userId: party.application.influencerId,
     type: "submission.revision",
     title: `Revision requested for ${party.application.campaignTitle}`,
     body: note,
-    href: `${env.CLIENT_ORIGIN}/collab/${applicationId}`,
+    href: `/collab/${applicationId}`,
   });
   return { ok: true as const, detail: await collabDetail(applicationId, userId) };
 }
@@ -147,14 +164,18 @@ export async function approveContent(userId: string, applicationId: string) {
   if (party.application.status !== "submitted") {
     return { ok: false as const, status: 409, error: "Content can be approved after it is submitted" };
   }
-  const moved = await moveStatus(applicationId, ["submitted"], "approved");
-  if (!moved) return { ok: false as const, status: 409, error: "Could not update the application" };
+  const [updated] = await db
+    .update(application)
+    .set({ status: "approved", updatedAt: new Date() })
+    .where(and(eq(application.id, applicationId), eq(application.status, "submitted")))
+    .returning({ id: application.id });
+  if (!updated) return { ok: false as const, status: 409, error: "Could not update the application" };
   await notifyUser({
     userId: party.application.influencerId,
     type: "submission.approved",
     title: `Content approved for ${party.application.campaignTitle}`,
     body: "Post the work, then submit the live URL as proof.",
-    href: `${env.CLIENT_ORIGIN}/collab/${applicationId}`,
+    href: `/collab/${applicationId}`,
   });
   return { ok: true as const, detail: await collabDetail(applicationId, userId) };
 }
@@ -166,20 +187,28 @@ export async function submitProof(userId: string, applicationId: string, input: 
     return { ok: false as const, status: 409, error: "Proof can be submitted after the brand approves the content" };
   }
   if (!input.url) return { ok: false as const, status: 400, error: "Proof needs the live post URL" };
-  await db.insert(submission).values({
-    applicationId,
-    kind: "proof",
-    url: input.url,
-    note: input.note ?? null,
+  const moved = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(application)
+      .set({ status: "completed", updatedAt: new Date() })
+      .where(and(eq(application.id, applicationId), eq(application.status, "approved")))
+      .returning({ id: application.id });
+    if (!updated) return false;
+    await tx.insert(submission).values({
+      applicationId,
+      kind: "proof",
+      url: input.url,
+      note: input.note ?? null,
+    });
+    return true;
   });
-  const moved = await moveStatus(applicationId, ["approved"], "completed");
   if (!moved) return { ok: false as const, status: 409, error: "Could not update the application" };
   await notifyUser({
     userId: party.brandId,
     type: "submission.completed",
     title: `${party.application.campaignTitle} is complete`,
     body: "The creator submitted proof of posting. You can leave a rating.",
-    href: `${env.CLIENT_ORIGIN}/collab/${applicationId}`,
+    href: `/collab/${applicationId}`,
   });
   await maybeCompleteCampaign(party.application.campaignId);
   return { ok: true as const, detail: await collabDetail(applicationId, userId) };
@@ -206,25 +235,37 @@ export async function rateCollab(userId: string, applicationId: string, input: R
     return { ok: false as const, status: 409, error: "Ratings open after the collaboration is complete" };
   }
   const rateeId = party.role === "brand" ? party.application.influencerId : party.brandId;
-  const [existing] = await db
-    .select({ id: rating.id })
-    .from(rating)
-    .where(and(eq(rating.applicationId, applicationId), eq(rating.raterId, userId)))
-    .limit(1);
-  if (existing) return { ok: false as const, status: 409, error: "You already rated this collaboration" };
-  await db.insert(rating).values({
-    applicationId,
-    raterId: userId,
-    rateeId,
-    score: input.score,
-    comment: input.comment ?? null,
-  });
+  try {
+    const inserted = await db.transaction(async (tx) => {
+      const [current] = await tx
+        .select({ status: application.status })
+        .from(application)
+        .where(eq(application.id, applicationId))
+        .for("update")
+        .limit(1);
+      if (!current || current.status !== "completed") return false;
+      await tx.insert(rating).values({
+        applicationId,
+        raterId: userId,
+        rateeId,
+        score: input.score,
+        comment: input.comment ?? null,
+      });
+      return true;
+    });
+    if (!inserted) return { ok: false as const, status: 409, error: "Ratings open after the collaboration is complete" };
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      return { ok: false as const, status: 409, error: "You already rated this collaboration" };
+    }
+    throw err;
+  }
   await notifyUser({
     userId: rateeId,
     type: "rating.created",
     title: "New rating",
     body: `You received ${input.score} out of 5 on ${party.application.campaignTitle}.`,
-    href: `${env.CLIENT_ORIGIN}/collab/${applicationId}`,
+    href: `/collab/${applicationId}`,
   });
   return { ok: true as const, detail: await collabDetail(applicationId, userId) };
 }

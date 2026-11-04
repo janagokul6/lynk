@@ -1,12 +1,13 @@
 import { z } from "zod";
+import { httpUrlSchema } from "./http-url.js";
 
-export const submissionKindSchema = z.enum(["content", "proof"]);
+export const submissionKindSchema = z.enum(["content", "proof", "revision"]);
 export type SubmissionKind = z.infer<typeof submissionKindSchema>;
 
 export const submissionCreateSchema = z
   .object({
-    url: z.string().trim().url().max(2000).optional(),
-    storageKey: z.string().trim().min(1).max(300).optional(),
+    url: httpUrlSchema.optional(),
+    storageKey: z.string().trim().min(1).max(512).optional(),
     note: z.string().trim().max(4000).optional(),
   })
   .strict()

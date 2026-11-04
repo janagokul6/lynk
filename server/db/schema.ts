@@ -12,8 +12,9 @@ import {
   date,
   index,
   customType,
+  check,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import type { UserPlan, UserRole } from "@lynk/shared";
 
 const vector1536 = customType<{ data: number[]; driverData: string }>({
@@ -368,6 +369,9 @@ export const campaignInvite = pgTable(
   (table) => [
     uniqueIndex("campaign_invite_campaign_influencer_unique").on(table.campaignId, table.influencerId),
     index("campaign_invite_influencer_idx").on(table.influencerId),
+    index("campaign_invite_campaign_idx").on(table.campaignId),
+    index("campaign_invite_brand_idx").on(table.brandId),
+    index("campaign_invite_creator_idx").on(table.creatorId),
   ]
 );
 
@@ -385,7 +389,10 @@ export const submission = pgTable(
     revisionNote: text("revisionNote"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
-  (table) => [index("submission_application_idx").on(table.applicationId)]
+  (table) => [
+    index("submission_application_idx").on(table.applicationId),
+    index("submission_storage_key_idx").on(table.storageKey),
+  ]
 );
 
 export const rating = pgTable(
@@ -405,7 +412,11 @@ export const rating = pgTable(
     comment: text("comment"),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("rating_application_rater_unique").on(table.applicationId, table.raterId)]
+  (table) => [
+    uniqueIndex("rating_application_rater_unique").on(table.applicationId, table.raterId),
+    index("rating_ratee_idx").on(table.rateeId),
+    check("rating_score_range", sql`${table.score} >= 1 AND ${table.score} <= 5`),
+  ]
 );
 
 export const conversation = pgTable(

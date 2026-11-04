@@ -1,18 +1,17 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import type { Request, Response } from "express";
 import { fromNodeHeaders } from "better-auth/node";
+import { and, eq, gt } from "drizzle-orm";
 import { env } from "../../config/env.js";
 import { auth } from "../../lib/auth.js";
+import { db } from "../../lib/db.js";
+import { cache, user } from "../../db/schema.js";
 import { upsertCreator } from "../creators/creators.service.js";
 import { upsertConnection } from "./connections.service.js";
 
-function signState(userId: string, platform: string): string {
-  const body = Buffer.from(JSON.stringify({ userId, platform, exp: Date.now() + 10 * 60 * 1000 })).toString("base64url");
-  const sig = createHmac("sha256", env.BETTER_AUTH_SECRET).update(body).digest("base64url");
-  return `${body}.${sig}`;
-}
+type OAuthState = { userId: string; platform: string; nonce: string };
 
-function readState(state: string): { userId: string; platform: string } | null {
+function verifyState(state: string): OAuthState | null {
   const [body, sig] = state.split(".");
   if (!body || !sig) return null;
   const expected = createHmac("sha256", env.BETTER_AUTH_SECRET).update(body).digest("base64url");
@@ -24,12 +23,37 @@ function readState(state: string): { userId: string; platform: string } | null {
       userId?: string;
       platform?: string;
       exp?: number;
+      nonce?: string;
     };
-    if (!parsed.userId || !parsed.platform || !parsed.exp || parsed.exp < Date.now()) return null;
-    return { userId: parsed.userId, platform: parsed.platform };
+    if (!parsed.userId || !parsed.platform || !parsed.nonce || !parsed.exp || parsed.exp < Date.now()) return null;
+    return { userId: parsed.userId, platform: parsed.platform, nonce: parsed.nonce };
   } catch {
     return null;
   }
+}
+
+export async function issueOAuthState(userId: string, platform: string): Promise<string> {
+  const nonce = randomBytes(16).toString("base64url");
+  const exp = Date.now() + 10 * 60 * 1000;
+  const body = Buffer.from(JSON.stringify({ userId, platform, exp, nonce })).toString("base64url");
+  const sig = createHmac("sha256", env.BETTER_AUTH_SECRET).update(body).digest("base64url");
+  await db.insert(cache).values({
+    key: `oauth:${nonce}`,
+    value: `${userId}:${platform}`,
+    expiresAt: new Date(exp),
+  });
+  return `${body}.${sig}`;
+}
+
+export async function consumeOAuthState(state: string): Promise<{ userId: string; platform: string } | null> {
+  const parsed = verifyState(state);
+  if (!parsed) return null;
+  const [row] = await db
+    .delete(cache)
+    .where(and(eq(cache.key, `oauth:${parsed.nonce}`), gt(cache.expiresAt, new Date())))
+    .returning();
+  if (!row || row.value !== `${parsed.userId}:${parsed.platform}`) return null;
+  return { userId: parsed.userId, platform: parsed.platform };
 }
 
 function finish(res: Response, platform: string, error?: string) {
@@ -44,6 +68,18 @@ async function sessionUserId(req: Request): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
+async function influencerId(req: Request): Promise<string | null> {
+  const userId = await sessionUserId(req);
+  if (!userId) return null;
+  const [account] = await db
+    .select({ role: user.role, roleChosenAt: user.roleChosenAt })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+  if (!account || account.role !== "influencer" || !account.roleChosenAt) return null;
+  return userId;
+}
+
 export function youtubeConfigured(): boolean {
   return Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 }
@@ -53,9 +89,13 @@ export function instagramConfigured(): boolean {
 }
 
 export async function startYoutube(req: Request, res: Response): Promise<void> {
-  const userId = await sessionUserId(req);
-  if (!userId) {
+  if (!(await sessionUserId(req))) {
     res.redirect(`${env.CLIENT_ORIGIN}/login`);
+    return;
+  }
+  const userId = await influencerId(req);
+  if (!userId) {
+    finish(res, "youtube", "forbidden");
     return;
   }
   if (!youtubeConfigured()) {
@@ -70,13 +110,14 @@ export async function startYoutube(req: Request, res: Response): Promise<void> {
   url.searchParams.set("scope", "https://www.googleapis.com/auth/youtube.readonly");
   url.searchParams.set("access_type", "offline");
   url.searchParams.set("include_granted_scopes", "true");
-  url.searchParams.set("state", signState(userId, "youtube"));
+  url.searchParams.set("prompt", "consent");
+  url.searchParams.set("state", await issueOAuthState(userId, "youtube"));
   res.redirect(url.toString());
 }
 
 export async function youtubeCallback(req: Request, res: Response): Promise<void> {
-  const userId = await sessionUserId(req);
-  const state = readState(String(req.query.state ?? ""));
+  const userId = await influencerId(req);
+  const state = await consumeOAuthState(String(req.query.state ?? ""));
   if (!userId || !state || state.userId !== userId || state.platform !== "youtube") {
     finish(res, "youtube", "session");
     return;
@@ -153,9 +194,13 @@ export async function youtubeCallback(req: Request, res: Response): Promise<void
 }
 
 export async function startInstagram(req: Request, res: Response): Promise<void> {
-  const userId = await sessionUserId(req);
-  if (!userId) {
+  if (!(await sessionUserId(req))) {
     res.redirect(`${env.CLIENT_ORIGIN}/login`);
+    return;
+  }
+  const userId = await influencerId(req);
+  if (!userId) {
+    finish(res, "instagram", "forbidden");
     return;
   }
   if (!instagramConfigured()) {
@@ -168,13 +213,13 @@ export async function startInstagram(req: Request, res: Response): Promise<void>
   url.searchParams.set("redirect_uri", redirectUri);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", "instagram_business_basic");
-  url.searchParams.set("state", signState(userId, "instagram"));
+  url.searchParams.set("state", await issueOAuthState(userId, "instagram"));
   res.redirect(url.toString());
 }
 
 export async function instagramCallback(req: Request, res: Response): Promise<void> {
-  const userId = await sessionUserId(req);
-  const state = readState(String(req.query.state ?? ""));
+  const userId = await influencerId(req);
+  const state = await consumeOAuthState(String(req.query.state ?? ""));
   if (!userId || !state || state.userId !== userId || state.platform !== "instagram") {
     finish(res, "instagram", "session");
     return;

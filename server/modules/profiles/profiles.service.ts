@@ -107,7 +107,6 @@ export async function publicCreator(id: string) {
   const [row] = await db.select().from(creatorProfile).where(eq(creatorProfile.id, id)).limit(1);
   if (!row) return null;
   const profile = row.userId ? await getInfluencerProfile(row.userId) : null;
-  const brand = row.userId ? await getBrandProfile(row.userId) : null;
   return {
     id: row.id,
     platform: row.platform,
@@ -121,7 +120,6 @@ export async function publicCreator(id: string) {
     verified: Boolean(row.userId),
     bio: profile?.bio ?? null,
     rates: profile?.rates ?? null,
-    website: brand?.website ?? null,
   };
 }
 

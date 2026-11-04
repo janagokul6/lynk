@@ -17,7 +17,7 @@ Set `SENTRY_DSN` on the API to send unhandled request errors. Leave it unset and
 
 ## Mail
 
-Set `RESEND_API_KEY` and `MAIL_FROM`, or `SMTP_URL` and `MAIL_FROM`. With neither, messages are logged. Outside production they are also kept in memory for `GET /api/dev/mailbox`.
+Set `RESEND_API_KEY` and `MAIL_FROM`, or `SMTP_URL` and `MAIL_FROM`. With neither, the subject is logged. Message bodies are logged only outside production, where they are also kept in memory for `GET /api/dev/mailbox`. That route returns 404 when `NODE_ENV` is `production`. Invite and application emails are capped by `RATE_LIMIT_MAIL_MAX` (default 20 per window).
 
 ## Agent memory
 

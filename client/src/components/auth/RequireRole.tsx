@@ -18,11 +18,15 @@ export function RequireRole({
   useEffect(() => {
     let cancelled = false;
     api
-      .get<{ user?: { role?: string } } | null>("/api/me")
+      .get<{ user?: { role?: string; roleChosenAt?: string | null } } | null>("/api/me")
       .then((response) => {
         const actual = response.data?.user?.role;
         if (!actual) {
           router.replace("/login");
+          return;
+        }
+        if (actual !== "admin" && !response.data?.user?.roleChosenAt) {
+          router.replace("/role");
           return;
         }
         if (actual !== role) {

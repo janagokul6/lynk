@@ -37,10 +37,16 @@ export default function LoginPage() {
     }
     toast.success("Welcome back");
     try {
-      const me = await api.get<{ user?: { role?: string } } | null>("/api/me");
-      router.push(homePathForRole(me.data?.user?.role));
+      const me = await api.get<{ user?: { role?: string; roleChosenAt?: string | null } } | null>("/api/me");
+      const account = me.data?.user;
+      if (!account) return;
+      if (account.role !== "admin" && !account.roleChosenAt) {
+        router.push("/role");
+        return;
+      }
+      router.push(homePathForRole(account.role));
     } catch {
-      router.push("/role");
+      toast.error("Signed in, but the session could not be loaded.");
     }
   }
 
@@ -76,7 +82,7 @@ export default function LoginPage() {
             type="button"
             className="w-full"
             onClick={() => {
-              void authClient.signIn.social({ provider: "google", callbackURL: window.location.origin });
+              void authClient.signIn.social({ provider: "google", callbackURL: `${window.location.origin}/role` });
             }}
           >
             Continue with Google

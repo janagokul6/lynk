@@ -24,4 +24,5 @@ export * from "./profile.js";
 export * from "./notification.js";
 export * from "./invite.js";
 export * from "./collab.js";
+export * from "./http-url.js";
 export * from "./messaging.js";

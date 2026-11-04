@@ -1,19 +1,25 @@
-import { asc, desc, eq } from "drizzle-orm";
-import { env } from "../../config/env.js";
+import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "../../lib/db.js";
 import { notifyUser } from "../../lib/notify.js";
 import { application, campaign, conversation, message, user } from "../../db/schema.js";
-import { collabOpen, loadParty } from "../collab/collab.service.js";
+import { COLLAB_STATUS_LIST, collabOpen, loadParty } from "../collab/collab.service.js";
+
+const influencerUser = alias(user, "influencer_user");
 
 async function threadForApplication(applicationId: string) {
+  const [created] = await db
+    .insert(conversation)
+    .values({ applicationId })
+    .onConflictDoNothing({ target: conversation.applicationId })
+    .returning();
+  if (created) return created;
   const [existing] = await db
     .select()
     .from(conversation)
     .where(eq(conversation.applicationId, applicationId))
     .limit(1);
-  if (existing) return existing;
-  const [created] = await db.insert(conversation).values({ applicationId }).returning();
-  return created;
+  return existing ?? null;
 }
 
 export async function listThreads(userId: string) {
@@ -21,42 +27,33 @@ export async function listThreads(userId: string) {
     .select({
       conversationId: conversation.id,
       applicationId: application.id,
-      status: application.status,
       title: campaign.title,
       brandId: campaign.userId,
       brandName: user.name,
-      influencerId: application.influencerId,
-      updatedAt: conversation.createdAt,
+      influencerName: influencerUser.name,
+      threadCreatedAt: conversation.createdAt,
+      applicationUpdatedAt: application.updatedAt,
     })
     .from(application)
     .innerJoin(campaign, eq(application.campaignId, campaign.id))
     .innerJoin(user, eq(campaign.userId, user.id))
+    .innerJoin(influencerUser, eq(application.influencerId, influencerUser.id))
     .leftJoin(conversation, eq(conversation.applicationId, application.id))
+    .where(
+      and(
+        inArray(application.status, [...COLLAB_STATUS_LIST]),
+        or(eq(campaign.userId, userId), eq(application.influencerId, userId))
+      )
+    )
     .orderBy(desc(application.updatedAt));
 
-  const mine = rows.filter(
-    (row) => collabOpen(row.status) && (row.brandId === userId || row.influencerId === userId)
-  );
-  const summaries = [];
-  for (const row of mine) {
-    const thread = row.conversationId
-      ? { id: row.conversationId, createdAt: row.updatedAt }
-      : await threadForApplication(row.applicationId);
-    if (!thread) continue;
-    const [influencer] = await db
-      .select({ name: user.name })
-      .from(user)
-      .where(eq(user.id, row.influencerId))
-      .limit(1);
-    summaries.push({
-      id: thread.id,
-      applicationId: row.applicationId,
-      title: row.title,
-      withName: row.brandId === userId ? influencer?.name ?? "Creator" : row.brandName,
-      updatedAt: (thread.createdAt ?? new Date()).toISOString(),
-    });
-  }
-  return summaries;
+  return rows.map((row) => ({
+    id: row.conversationId,
+    applicationId: row.applicationId,
+    title: row.title,
+    withName: row.brandId === userId ? row.influencerName : row.brandName,
+    updatedAt: (row.threadCreatedAt ?? row.applicationUpdatedAt).toISOString(),
+  }));
 }
 
 async function assertMember(conversationId: string, userId: string) {
@@ -105,7 +102,7 @@ export async function postMessage(conversationId: string, userId: string, body: 
     type: "message.created",
     title: `New message on ${party.application.campaignTitle}`,
     body,
-    href: `${env.CLIENT_ORIGIN}/messages/${conversationId}`,
+    href: `/messages/${conversationId}`,
   });
   return {
     ok: true as const,

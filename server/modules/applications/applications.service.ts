@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type { ApplicationStatus } from "@lynk/shared";
-import { env } from "../../config/env.js";
 import { db } from "../../lib/db.js";
+import { isUniqueViolation } from "../../lib/pg-error.js";
 import { notifyUser } from "../../lib/notify.js";
 import { application, campaign, user } from "../../db/schema.js";
 
@@ -17,17 +17,6 @@ export type ApplicationView = {
   influencerName: string;
   influencerEmail: string;
 };
-
-function isUniqueViolation(err: unknown): boolean {
-  const candidates = [err, err instanceof Error ? (err as { cause?: unknown }).cause : undefined];
-  return candidates.some(
-    (candidate) =>
-      typeof candidate === "object" &&
-      candidate !== null &&
-      "code" in candidate &&
-      (candidate as { code?: string }).code === "23505"
-  );
-}
 
 function toView(row: {
   id: string;
@@ -110,7 +99,7 @@ export async function createApplication(input: {
         type: "application.created",
         title: `New application for ${view.campaignTitle}`,
         body: `${view.influencerName} applied.`,
-        href: `${env.CLIENT_ORIGIN}/collab/${view.id}`,
+        href: `/collab/${view.id}`,
         email: true,
       });
     }
@@ -236,7 +225,7 @@ export async function decideApplication(
       status === "accepted"
         ? "The brand accepted your application. You can submit the work from the collaboration page."
         : "The brand declined this application.",
-    href: `${env.CLIENT_ORIGIN}/collab/${updated.id}`,
+    href: `/collab/${updated.id}`,
     email: true,
   });
   return { ok: true, application: updated };

@@ -7,6 +7,18 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+const UPLOAD_TYPES: Record<string, string> = {
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  webp: "image/webp",
+  gif: "image/gif",
+  avif: "image/avif",
+  mp4: "video/mp4",
+  webm: "video/webm",
+  pdf: "application/pdf",
+};
+
 type Collab = {
   role: "brand" | "influencer";
   guidelines: string | null;
@@ -68,11 +80,21 @@ export default function CollabPage() {
   }
 
   async function uploadFile(file: File) {
+    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const contentType = UPLOAD_TYPES[extension];
+    if (!contentType) {
+      setError("Upload a PNG, JPG, WEBP, GIF, AVIF, MP4, WEBM, or PDF.");
+      return;
+    }
     const signed = await api.post<{ uploadUrl: string; key: string }>("/api/storage/sign", {
       key: file.name.replace(/[^a-zA-Z0-9._-]/g, "_"),
-      contentType: file.type || "application/octet-stream",
+      contentType,
     });
-    await fetch(signed.data.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type || "application/octet-stream" } });
+    const uploaded = await fetch(signed.data.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": contentType } });
+    if (!uploaded.ok) {
+      setError("The file was rejected. Check the type and try again.");
+      return;
+    }
     await act("submissions", { storageKey: signed.data.key, note });
   }
 

@@ -12,10 +12,18 @@ const CREDENTIAL_AUTH_PREFIXES = [
   "/api/auth/change-email",
   "/api/auth/send-verification-email",
   "/api/auth/verify-email",
+  "/api/auth/delete-user",
 ];
 
 export function isCredentialAuthPath(path: string): boolean {
   return CREDENTIAL_AUTH_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+export function isProductMailPath(method: string, path: string): boolean {
+  if (method !== "POST") return false;
+  if (path === "/api/invites" || path === "/api/applications") return true;
+  if (/^\/api\/invites\/[^/]+\/accept$/.test(path)) return true;
+  return /^\/api\/applications\/[^/]+\/(?:accept|reject)$/.test(path);
 }
 
 const limitMessage = { error: "Too many attempts. Try again in a few minutes." };
@@ -36,9 +44,21 @@ export const authLimiter = rateLimit({
   message: limitMessage,
 });
 
+export const mailLimiter = rateLimit({
+  windowMs: env.RATE_LIMIT_WINDOW_MS,
+  limit: env.RATE_LIMIT_MAIL_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: limitMessage,
+});
+
 export function rateLimitByRoute(req: Request, res: Response, next: NextFunction): void {
   if (isCredentialAuthPath(req.path)) {
     void authLimiter(req, res, next);
+    return;
+  }
+  if (isProductMailPath(req.method, req.path)) {
+    void mailLimiter(req, res, next);
     return;
   }
   void generalLimiter(req, res, next);

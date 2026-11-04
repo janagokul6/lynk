@@ -26,7 +26,7 @@ export async function getSession(req: Request, res: Response): Promise<void> {
 
   const { token: _token, ...sessionFields } = session.session;
   const [account] = await db
-    .select({ plan: user.plan, role: user.role })
+    .select({ plan: user.plan, role: user.role, roleChosenAt: user.roleChosenAt })
     .from(user)
     .where(eq(user.id, session.user.id))
     .limit(1);
@@ -35,6 +35,7 @@ export async function getSession(req: Request, res: Response): Promise<void> {
       ...session.user,
       role: account?.role ?? session.user.role,
       plan: normalizePlan(account?.plan),
+      roleChosenAt: account?.roleChosenAt?.toISOString() ?? null,
     },
     session: sessionFields,
   });

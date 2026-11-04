@@ -164,7 +164,13 @@ export async function getOne(req: ReqWithUserId, res: Response): Promise<void> {
     res.status(404).json({ error: "Campaign not found" });
     return;
   }
-  res.json(rowToJson(row));
+  const json = rowToJson(row);
+  if (row.userId !== userId) {
+    const { userId: _owner, ...rest } = json;
+    res.json(rest);
+    return;
+  }
+  res.json(json);
 }
 
 export async function publish(req: ReqWithUserId, res: Response): Promise<void> {

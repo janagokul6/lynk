@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type Thread = { id: string; applicationId: string; title: string; withName: string };
+type Thread = { id: string | null; applicationId: string; title: string; withName: string };
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -30,8 +30,11 @@ export default function MessagesPage() {
       {threads?.length === 0 ? <p className="text-sm text-slate-500">No conversations yet.</p> : null}
       <ul className="space-y-2">
         {threads?.map((thread) => (
-          <li key={thread.id}>
-            <Link href={`/messages/${thread.id}`} className="block rounded-xl border border-border p-4">
+          <li key={thread.id ?? thread.applicationId}>
+            <Link
+              href={thread.id ? `/messages/${thread.id}` : `/messages/start/${thread.applicationId}`}
+              className="block rounded-xl border border-border p-4"
+            >
               <p className="font-semibold">{thread.title}</p>
               <p className="text-sm text-slate-500">With {thread.withName}</p>
             </Link>

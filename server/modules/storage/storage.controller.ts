@@ -1,9 +1,11 @@
 import { createReadStream, existsSync } from "node:fs";
+import { basename } from "node:path";
 import type { Request, Response } from "express";
 import { z } from "zod";
 import type { AuthedRequest } from "../../policies/requireSession.js";
 import { storageKeyVisible } from "../collab/collab.service.js";
 import {
+  bytesMatchContentType,
   contentTypeForKey,
   contentTypeMatchesKey,
   createSignedUpload,
@@ -81,7 +83,12 @@ export async function uploadLocal(req: Request, res: Response): Promise<void> {
     }
     chunks.push(buf);
   }
-  await saveLocalUpload(verified.key, Buffer.concat(chunks));
+  const body = Buffer.concat(chunks);
+  if (!bytesMatchContentType(verified.contentType, body)) {
+    res.status(415).json({ error: "File contents do not match the declared type" });
+    return;
+  }
+  await saveLocalUpload(verified.key, body);
   res.status(201).json({ key: verified.key });
 }
 
@@ -105,7 +112,11 @@ export async function getFile(req: Request, res: Response): Promise<void> {
     res.status(404).json({ error: "Not found" });
     return;
   }
+  const type = contentTypeForKey(key);
+  const inline = type.startsWith("image/") || type.startsWith("video/");
+  const filename = basename(key).replace(/[^A-Za-z0-9._-]/g, "_");
   res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("Content-Type", contentTypeForKey(key));
+  res.setHeader("Content-Type", type);
+  res.setHeader("Content-Disposition", `${inline ? "inline" : "attachment"}; filename="${filename}"`);
   createReadStream(path).pipe(res);
 }

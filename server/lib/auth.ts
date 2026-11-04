@@ -6,9 +6,17 @@ import { db } from "./db.js";
 import * as schema from "../db/schema.js";
 import { env } from "../config/env.js";
 import { sendMail } from "./mailer.js";
+import { purgeUserOwnedData } from "./account-deletion.js";
 
 const googleEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 const SELF_SERVE_ROLES = new Set(["brand", "influencer"]);
+const explicitRoleEmails = new Set<string>();
+
+export function roleForSignup(requested: string | undefined): { role: "brand" | "influencer"; lock: boolean } | null {
+  if (!requested) return { role: "brand", lock: false };
+  if (!SELF_SERVE_ROLES.has(requested)) return null;
+  return { role: requested as "brand" | "influencer", lock: true };
+}
 
 function readRequestedRole(context: { body?: unknown } | null): string | undefined {
   const body = context?.body;
@@ -79,28 +87,44 @@ export const auth = betterAuth({
     },
     deleteUser: {
       enabled: true,
+      beforeDelete: async (account: { id: string; email?: string | null }) => {
+        await purgeUserOwnedData(account.id, account.email);
+      },
     },
   },
   databaseHooks: {
     user: {
       create: {
         before: async (user, context) => {
-          const requested = readRequestedRole(context);
-          const role = requested && SELF_SERVE_ROLES.has(requested) ? requested : requested ? null : "brand";
-          if (!role) {
+          const decision = roleForSignup(readRequestedRole(context));
+          if (!decision) {
             throw APIError.from("BAD_REQUEST", {
               code: "INVALID_ROLE",
               message: "Role must be brand or influencer",
             });
           }
-          return { data: { ...user, role, plan: "free", roleChosenAt: new Date() } };
+          if (decision.lock && user.email) explicitRoleEmails.add(user.email.toLowerCase());
+          return {
+            data: {
+              ...user,
+              role: decision.role,
+              plan: "free",
+              roleChosenAt: decision.lock ? new Date() : null,
+            },
+          };
         },
         after: async (created) => {
-          if (!created?.id) return;
+          const email = created?.email?.toLowerCase();
+          if (!created?.id || !email || !explicitRoleEmails.delete(email)) return;
           await db
             .update(schema.user)
             .set({ roleChosenAt: new Date() })
             .where(eq(schema.user.id, created.id));
+        },
+        delete: {
+          before: async (account: { id: string; email?: string | null }) => {
+            await purgeUserOwnedData(account.id, account.email);
+          },
         },
       },
     },

@@ -7,8 +7,15 @@ import {
   compareCreatorsInputSchema,
   creatorMatchQuerySchema,
   creatorSyncPayloadSchema,
+  collabIdSchema,
+  collabProofToolSchema,
+  collabRateToolSchema,
+  collabRevisionToolSchema,
+  collabSubmitToolSchema,
   inviteCreateSchema,
+  inviteRespondSchema,
   marketplaceSearchInputSchema,
+  messageSendToolSchema,
   roiToolInputSchema,
   shortlistAddSchema,
   shortlistGroupCreateSchema,
@@ -129,10 +136,57 @@ export async function invokeTool(
     case "messages.status":
       toolInputSchemas["messages.status"].parse(rawInput ?? {});
       return handlers.messagingStatus(ctx.userId);
+    case "messages.send":
+      return handlers.sendMessageFromTool(
+        ctx.userId,
+        messageSendToolSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
     case "invites.create":
       return handlers.createInviteFromTool(
         ctx.userId,
         inviteCreateSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "invites.mine":
+      toolInputSchemas["invites.mine"].parse(rawInput ?? {});
+      return handlers.myInvites(ctx.userId);
+    case "invites.respond":
+      return handlers.respondInviteFromTool(
+        ctx.userId,
+        inviteRespondSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "collab.summary":
+      return handlers.collabSummary(ctx.userId, collabIdSchema.parse(rawInput).applicationId);
+    case "collab.submit":
+      return handlers.collabSubmitFromTool(
+        ctx.userId,
+        collabSubmitToolSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "collab.revision":
+      return handlers.collabRevisionFromTool(
+        ctx.userId,
+        collabRevisionToolSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "collab.approve":
+      return handlers.collabApproveFromTool(
+        ctx.userId,
+        collabIdSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "collab.proof":
+      return handlers.collabProofFromTool(
+        ctx.userId,
+        collabProofToolSchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "collab.rate":
+      return handlers.collabRateFromTool(
+        ctx.userId,
+        collabRateToolSchema.parse(rawInput),
         ctx.confirmed === true
       );
     default: {

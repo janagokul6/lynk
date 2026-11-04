@@ -11,6 +11,14 @@ export const inviteCreateSchema = z
   .strict();
 export type InviteCreateInput = z.infer<typeof inviteCreateSchema>;
 
+export const inviteRespondSchema = z
+  .object({
+    inviteId: z.string().uuid(),
+    decision: z.enum(["accepted", "declined"]),
+  })
+  .strict();
+export type InviteRespondInput = z.infer<typeof inviteRespondSchema>;
+
 export const inviteSchema = z.object({
   id: z.string().uuid(),
   campaignId: z.string().uuid(),

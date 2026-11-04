@@ -44,6 +44,38 @@ export function contentTypeMatchesKey(contentType: string, key: string): boolean
   return extensions.some((ext) => lower.endsWith(ext));
 }
 
+export function isOwnedUploadKey(userId: string, key: string): boolean {
+  if (!isSafeObjectKey(userId) || !isSafeObjectKey(key)) return false;
+  const prefix = `users/${userId}/`;
+  return key.startsWith(prefix) && key.length > prefix.length;
+}
+
+export function bytesMatchContentType(contentType: string, body: Buffer): boolean {
+  if (body.length < 8) return false;
+  if (contentType === "image/png") {
+    return body.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  }
+  if (contentType === "image/jpeg") return body[0] === 0xff && body[1] === 0xd8 && body[2] === 0xff;
+  if (contentType === "image/gif") {
+    const header = body.subarray(0, 6).toString("ascii");
+    return header === "GIF87a" || header === "GIF89a";
+  }
+  if (contentType === "image/webp") {
+    return body.length >= 12 && body.subarray(0, 4).toString("ascii") === "RIFF" && body.subarray(8, 12).toString("ascii") === "WEBP";
+  }
+  if (contentType === "image/avif" || contentType === "video/mp4") {
+    if (body.length < 12 || body.subarray(4, 8).toString("ascii") !== "ftyp") return false;
+    if (contentType === "video/mp4") return true;
+    const brand = body.subarray(8, 12).toString("ascii");
+    return brand.startsWith("avif") || brand.startsWith("avis");
+  }
+  if (contentType === "video/webm") {
+    return body[0] === 0x1a && body[1] === 0x45 && body[2] === 0xdf && body[3] === 0xa3;
+  }
+  if (contentType === "application/pdf") return body.subarray(0, 5).toString("ascii") === "%PDF-";
+  return false;
+}
+
 export function contentTypeForKey(key: string): string {
   const lower = key.toLowerCase();
   const match = Object.entries(ALLOWED_CONTENT_TYPES)

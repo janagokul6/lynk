@@ -21,7 +21,7 @@ export const messageSchema = z.object({
 });
 
 export const threadSummarySchema = z.object({
-  id: z.string().uuid(),
+  id: z.string().uuid().nullable(),
   applicationId: z.string().uuid(),
   title: z.string(),
   withName: z.string(),

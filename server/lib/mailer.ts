@@ -20,6 +20,18 @@ export function clearMailbox(): void {
   mailbox.length = 0;
 }
 
+export function devMailboxEnabled(nodeEnv: string = env.NODE_ENV): boolean {
+  return nodeEnv !== "production";
+}
+
+export function mailLogFields(
+  mail: { to: string; subject: string; text: string },
+  nodeEnv: string = env.NODE_ENV
+): { to: string; subject: string; text?: string } {
+  if (nodeEnv === "production") return { to: mail.to, subject: mail.subject };
+  return { to: mail.to, subject: mail.subject, text: mail.text };
+}
+
 async function sendResend(mail: OutboundMail): Promise<void> {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -55,13 +67,13 @@ async function sendSmtp(mail: OutboundMail): Promise<void> {
 
 export async function sendMail(input: { to: string; subject: string; text: string; html?: string }): Promise<void> {
   const mail: OutboundMail = { ...input, createdAt: new Date().toISOString() };
-  if (env.NODE_ENV !== "production") {
+  if (devMailboxEnabled()) {
     mailbox.push(mail);
     if (mailbox.length > 100) mailbox.shift();
   }
-  logger.info("mail", { to: mail.to, subject: mail.subject, transport: env.RESEND_API_KEY ? "resend" : env.SMTP_URL ? "smtp" : "console" });
+  const transport = env.RESEND_API_KEY ? "resend" : env.SMTP_URL ? "smtp" : "console";
+  logger.info("mail", { ...mailLogFields(mail), transport });
   if (!env.RESEND_API_KEY && !env.SMTP_URL) {
-    logger.info("mail body", { text: mail.text });
     return;
   }
   try {

@@ -4,8 +4,9 @@ import { creatorMatchHitSchema } from "./match.js";
 import { roiEstimateSchema } from "./roi.js";
 import { shortlistAddSchema, shortlistGroupCreateSchema, shortlistListSchema, shortlistRemoveSchema } from "./shortlist.js";
 import { homeCampaignCardSchema } from "./home.js";
-import { inviteCreateSchema, inviteSchema } from "./invite.js";
-import { threadSummarySchema } from "./messaging.js";
+import { httpUrlSchema } from "./http-url.js";
+import { inviteCreateSchema, inviteRespondSchema, inviteSchema } from "./invite.js";
+import { messageSchema, threadSummarySchema } from "./messaging.js";
 
 export const TOOL_CONFIRM_HEADER = "x-lynk-confirm";
 
@@ -15,6 +16,13 @@ export const confirmToolNames = [
   "applications.apply",
   "applications.withdraw",
   "invites.create",
+  "invites.respond",
+  "messages.send",
+  "collab.submit",
+  "collab.revision",
+  "collab.approve",
+  "collab.proof",
+  "collab.rate",
 ] as const;
 export type ConfirmToolName = (typeof confirmToolNames)[number];
 
@@ -146,6 +154,67 @@ export const messagesStatusSchema = z.object({
   threads: z.array(threadSummarySchema),
 });
 
+export const messageSendToolSchema = z
+  .object({
+    applicationId: z.string().uuid(),
+    body: z.string().trim().min(1).max(4000),
+  })
+  .strict();
+
+export const collabIdSchema = z
+  .object({
+    applicationId: z.string().uuid(),
+  })
+  .strict();
+
+export const collabSubmitToolSchema = z
+  .object({
+    applicationId: z.string().uuid(),
+    url: httpUrlSchema,
+    note: z.string().trim().max(4000).optional(),
+  })
+  .strict();
+
+export const collabRevisionToolSchema = z
+  .object({
+    applicationId: z.string().uuid(),
+    note: z.string().trim().min(1).max(4000),
+  })
+  .strict();
+
+export const collabProofToolSchema = z
+  .object({
+    applicationId: z.string().uuid(),
+    url: httpUrlSchema,
+  })
+  .strict();
+
+export const collabRateToolSchema = z
+  .object({
+    applicationId: z.string().uuid(),
+    score: z.number().int().min(1).max(5),
+    comment: z.string().trim().max(2000).optional(),
+  })
+  .strict();
+
+export const collabSummarySchema = z.object({
+  applicationId: z.string().uuid(),
+  status: z.string(),
+  role: z.enum(["brand", "influencer"]),
+  campaignTitle: z.string(),
+  submissionCount: z.number().int().nonnegative(),
+  ratingCount: z.number().int().nonnegative(),
+});
+
+export const inviteListSchema = z.object({
+  invites: z.array(inviteSchema),
+});
+
+export const inviteRespondResultSchema = z.object({
+  status: z.enum(["accepted", "declined"]),
+  applicationId: z.string().uuid().nullable(),
+});
+
 export const agentToolInputSchemas = {
   "creators.compare": compareCreatorsInputSchema,
   "shortlist.list": z.object({}).strict(),
@@ -163,7 +232,16 @@ export const agentToolInputSchemas = {
   "applications.withdraw": applicationWithdrawSchema,
   "insights.public": z.object({}).strict(),
   "messages.status": z.object({}).strict(),
+  "messages.send": messageSendToolSchema,
   "invites.create": inviteCreateSchema,
+  "invites.mine": z.object({}).strict(),
+  "invites.respond": inviteRespondSchema,
+  "collab.summary": collabIdSchema,
+  "collab.submit": collabSubmitToolSchema,
+  "collab.revision": collabRevisionToolSchema,
+  "collab.approve": collabIdSchema,
+  "collab.proof": collabProofToolSchema,
+  "collab.rate": collabRateToolSchema,
 } as const;
 
 export const agentToolOutputSchemas = {
@@ -183,5 +261,14 @@ export const agentToolOutputSchemas = {
   "applications.withdraw": z.union([confirmationProposalSchema, applicationSchema]),
   "insights.public": publicInsightsSchema,
   "messages.status": messagesStatusSchema,
+  "messages.send": z.union([confirmationProposalSchema, messageSchema]),
   "invites.create": z.union([confirmationProposalSchema, inviteSchema]),
+  "invites.mine": inviteListSchema,
+  "invites.respond": z.union([confirmationProposalSchema, inviteRespondResultSchema]),
+  "collab.summary": collabSummarySchema,
+  "collab.submit": z.union([confirmationProposalSchema, collabSummarySchema]),
+  "collab.revision": z.union([confirmationProposalSchema, collabSummarySchema]),
+  "collab.approve": z.union([confirmationProposalSchema, collabSummarySchema]),
+  "collab.proof": z.union([confirmationProposalSchema, collabSummarySchema]),
+  "collab.rate": z.union([confirmationProposalSchema, collabSummarySchema]),
 } as const;
