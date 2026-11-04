@@ -3,8 +3,8 @@ import { homePathForRole } from "./auth.js";
 
 describe("homePathForRole", () => {
   it("sends each role to its home and everyone else to role selection", () => {
-    expect(homePathForRole("brand")).toBe("/brand/dashboard");
-    expect(homePathForRole("influencer")).toBe("/influencer/dashboard");
+    expect(homePathForRole("brand")).toBe("/brand/home");
+    expect(homePathForRole("influencer")).toBe("/influencer/home");
     expect(homePathForRole("admin")).toBe("/admin/dashboard");
     expect(homePathForRole(undefined)).toBe("/role");
     expect(homePathForRole(null)).toBe("/role");

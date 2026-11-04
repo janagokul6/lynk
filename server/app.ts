@@ -18,6 +18,8 @@ import { connectionsRouter } from "./modules/connections/connections.routes.js";
 import { storageRouter } from "./modules/storage/storage.routes.js";
 import { toolsRouter } from "./modules/tools/tools.routes.js";
 import { applicationsRouter } from "./modules/applications/applications.routes.js";
+import { shortlistRouter } from "./modules/shortlist/shortlist.routes.js";
+import { homeRouter } from "./modules/home/home.routes.js";
 
 const app = express();
 
@@ -54,6 +56,8 @@ app.use("/api", authRouter);
 app.use("/api/discovery", discoveryRouter);
 app.use("/api/campaigns", campaignsRouter);
 app.use("/api/applications", applicationsRouter);
+app.use("/api/shortlist", shortlistRouter);
+app.use("/api/home", homeRouter);
 app.use("/api/marketplace", marketplaceRouter);
 app.use("/api/creators", creatorsRouter);
 app.use("/api/connections", connectionsRouter);

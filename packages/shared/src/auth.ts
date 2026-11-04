@@ -9,8 +9,8 @@ export const updateRoleSchema = z.object({
 export type UpdateRoleInput = z.infer<typeof updateRoleSchema>;
 
 export function homePathForRole(role: string | null | undefined): string {
-  if (role === "brand") return "/brand/dashboard";
-  if (role === "influencer") return "/influencer/dashboard";
+  if (role === "brand") return "/brand/home";
+  if (role === "influencer") return "/influencer/home";
   if (role === "admin") return "/admin/dashboard";
   return "/role";
 }

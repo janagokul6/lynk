@@ -8,7 +8,8 @@ describe("tools contracts", () => {
     for (const d of descriptors) {
       expect(d.description.length).toBeGreaterThan(0);
       expect(d.inputSchema).toMatchObject({ type: "object" });
-      expect(d.outputSchema).toMatchObject({ type: "object" });
+      const output = d.outputSchema as { type?: string; anyOf?: unknown[] };
+      expect(output.type === "object" || Array.isArray(output.anyOf)).toBe(true);
     }
   });
 

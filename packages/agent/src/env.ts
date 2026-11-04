@@ -19,6 +19,8 @@ const schema = z.object({
   AGENT_API_KEY: z.preprocess(emptyToUndefined, z.string().min(16)),
   CLIENT_ORIGIN: z.string().url().default("http://127.0.0.1:43123"),
   AGENT_HOST: z.string().min(1).default("127.0.0.1"),
+  AGENT_TURN_LIMIT: z.coerce.number().int().positive().default(30),
+  AGENT_TURN_WINDOW_MS: z.coerce.number().int().positive().default(10 * 60 * 1000),
 });
 
 export const agentEnv = schema.parse({
@@ -27,6 +29,8 @@ export const agentEnv = schema.parse({
   AGENT_API_KEY: process.env.AGENT_API_KEY,
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN,
   AGENT_HOST: process.env.AGENT_HOST,
+  AGENT_TURN_LIMIT: process.env.AGENT_TURN_LIMIT,
+  AGENT_TURN_WINDOW_MS: process.env.AGENT_TURN_WINDOW_MS,
 });
 
 if (process.env.NODE_ENV === "production") {

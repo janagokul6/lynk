@@ -43,10 +43,12 @@ Locked 2026-10-30. Change only via explicit decision, not drive-by refactors.
 | Model adapter | AI SDK providers (`@ai-sdk/openai` / Anthropic) via Mastra |
 | Domain boundary | Agents call Lynk HTTP tools/services only — never reimplement campaigns/match |
 | Long work | Existing **pg-boss** workers |
-| Product UX | Default `/agent` chat shell; legacy click dashboards remain |
+| Product UX | Signed-in brand and influencer homes are chat-first (`/brand/home`, `/influencer/home`) with a dashboard toggle. `user.plan` is `free` or `pro` (default free) and gates the wide side-by-side layout. `/agent` remains the brand chat shell. Billing is later. |
 
 ### Slice plan
 
 1. **Slice 1 (now)** — `packages/agent` brand agent + CopilotKit chat + `creators.match` generative results
 2. **Slice 2** — campaign draft + ROI tools in Mastra workflows
 3. **Slice 3** — influencer agent allowlist + more generative surfaces
+
+Chat-first homes (`/brand/home`, `/influencer/home`), the influencer agent, shortlist, ROI estimate, and campaign draft/publish confirmation shipped on top of Slice 1. Conversation threads are not persisted yet.
