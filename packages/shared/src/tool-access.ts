@@ -25,6 +25,7 @@ export const toolPolicies: Record<ToolName, ToolPolicy> = {
   "marketplace.search": { roles: ["influencer"], agentKey: false },
   "applications.mine": { roles: ["influencer"], agentKey: false },
   "applications.apply": { roles: ["influencer"], agentKey: false },
+  "applications.withdraw": { roles: ["influencer"], agentKey: false },
   "insights.public": { roles: ["influencer"], agentKey: false },
   "messages.status": { roles: ["brand", "influencer"], agentKey: false },
 };

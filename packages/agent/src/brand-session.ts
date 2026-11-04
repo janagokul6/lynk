@@ -21,11 +21,14 @@ export function agentIdFromCopilotBody(body: unknown): string | null {
   if (!body || typeof body !== "object") return null;
   const record = body as Record<string, unknown>;
   if (typeof record.agent === "string") return record.agent;
+  if (typeof record.agentId === "string") return record.agentId;
   for (const key of ["body", "params"] as const) {
     const nested = record[key];
-    if (nested && typeof nested === "object" && typeof (nested as { agent?: unknown }).agent === "string") {
-      return (nested as { agent: string }).agent;
-    }
+    if (!nested || typeof nested !== "object") continue;
+    const agent = (nested as { agent?: unknown; agentId?: unknown }).agent;
+    const agentId = (nested as { agentId?: unknown }).agentId;
+    if (typeof agent === "string") return agent;
+    if (typeof agentId === "string") return agentId;
   }
   return null;
 }

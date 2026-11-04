@@ -14,6 +14,7 @@ export const homeCampaignCardSchema = z.object({
   location: z.string().nullable(),
   compensationType: z.string(),
   status: z.string().optional(),
+  description: z.string().optional(),
 });
 export type HomeCampaignCard = z.infer<typeof homeCampaignCardSchema>;
 

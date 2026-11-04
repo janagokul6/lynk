@@ -20,6 +20,7 @@ export const toolNames = [
   "marketplace.search",
   "applications.mine",
   "applications.apply",
+  "applications.withdraw",
   "insights.public",
   "messages.status",
 ] as const;
@@ -45,6 +46,7 @@ export const toolDescriptions: Record<ToolName, string> = {
   "marketplace.search": "Search live marketplace campaigns for the signed-in influencer",
   "applications.mine": "List the signed-in influencer's applications and statuses",
   "applications.apply": "Apply to a live campaign after the user confirms",
+  "applications.withdraw": "Withdraw the signed-in influencer's pending application after confirmation",
   "insights.public": "Public marketplace aggregates only. Never another creator's private data",
   "messages.status": "Report whether messaging is available",
 };

@@ -1,6 +1,7 @@
 import {
   applicationApplySchema,
   applicationDecideSchema,
+  applicationWithdrawSchema,
   buildToolDescriptors,
   campaignDraftSchema,
   compareCreatorsInputSchema,
@@ -113,6 +114,12 @@ export async function invokeTool(
       return handlers.applyToCampaign(
         ctx.userId,
         applicationApplySchema.parse(rawInput),
+        ctx.confirmed === true
+      );
+    case "applications.withdraw":
+      return handlers.withdrawOwnApplication(
+        ctx.userId,
+        applicationWithdrawSchema.parse(rawInput),
         ctx.confirmed === true
       );
     case "insights.public":

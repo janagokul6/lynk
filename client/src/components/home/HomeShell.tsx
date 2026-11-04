@@ -147,14 +147,14 @@ export function HomeShell({ role }: { role: "brand" | "influencer" }) {
         <HomeViewToggle view={view} onToggle={onToggle} />
       </header>
       <div className={cn("min-h-[calc(100vh-3.5rem)] pb-20 lg:pb-4", pro && "lg:grid lg:grid-cols-2")}>
-        <section className={cn("min-h-[70vh]", view === "dashboard" && (pro ? "hidden lg:block" : "hidden"))}>{chat}</section>
+        <section className={cn("flex h-[calc(100vh-3.5rem)] min-h-[32rem] flex-col", view === "dashboard" && (pro ? "hidden lg:flex" : "hidden"))}>{chat}</section>
         <section
           className={cn(
             "min-h-[70vh] border-border lg:border-l",
             view === "chat" && (pro ? "hidden lg:block" : "hidden")
           )}
         >
-          {role === "brand" ? <BrandDashboardPanel /> : <InfluencerDashboardPanel />}
+          {role === "brand" ? <BrandDashboardPanel key={view} /> : <InfluencerDashboardPanel key={view} />}
         </section>
       </div>
     </div>

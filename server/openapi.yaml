@@ -78,6 +78,7 @@ paths:
               - marketplace.search
               - applications.mine
               - applications.apply
+              - applications.withdraw
               - insights.public
               - messages.status
       requestBody:

@@ -12,6 +12,7 @@ describe("authorizeCopilotCookie", () => {
     expect(roleFromMePayload(null)).toBeNull();
     expect(roleFromMePayload({ user: { id: "u1", role: "brand" } })).toBe("brand");
     expect(agentIdFromCopilotBody({ body: { agent: "influencerAgent" } })).toBe("influencerAgent");
+    expect(agentIdFromCopilotBody({ params: { agentId: "brandAgent" } })).toBe("brandAgent");
     expect(agentAllowedForRole("brand", "influencerAgent")).toBe(false);
     expect(agentAllowedForRole("influencer", "influencerAgent")).toBe(true);
     expect(agentAllowedForRole("brand", null)).toBe(true);

@@ -44,6 +44,33 @@ Chat replies need `OPENAI_API_KEY` in `packages/agent/.env`. Without it, `GET /s
 
 Per-user agent turn caps: `AGENT_TURN_LIMIT` and `AGENT_TURN_WINDOW_MS` on the server (tool calls) and the agent runtime (CopilotKit turns).
 
+## Verify the signed-in stack
+
+This runs Postgres, migrations, the demo seed, the API, the Mastra runtime with `LYNK_SCRIPT_MODEL=1` (no OpenAI key), and Next.js.
+
+```bash
+# once, with pgvector installed
+createdb lynk || true
+# DATABASE_URL=postgresql://lynk:lynk@127.0.0.1:5432/lynk
+pnpm --filter @lynk/server exec drizzle-kit migrate
+pnpm seed:demo
+
+# terminal 1
+AGENT_TURN_LIMIT=100000 pnpm dev:server
+# terminal 2
+LYNK_SCRIPT_MODEL=1 AGENT_TURN_LIMIT=100000 pnpm dev:agent
+# terminal 3
+pnpm dev:client
+
+pnpm test:agent-loop   # Mastra generate + CopilotKit HTTP for every tool
+pnpm --filter @lynk/client exec playwright install chromium
+pnpm test:e2e          # Playwright. Also starts the three servers if they are down.
+```
+
+`LYNK_SCRIPT_MODEL=1` makes the agent emit the tool named in a `LYNK_TOOL <name> <json>` message. Answer quality still needs a real `OPENAI_API_KEY`.
+
+Screenshots from Playwright land in `/opt/cursor/artifacts/screenshots`.
+
 ## Quality
 
 ```bash

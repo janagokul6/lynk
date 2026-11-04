@@ -11,6 +11,7 @@ export const confirmToolNames = [
   "campaigns.create",
   "applications.decide",
   "applications.apply",
+  "applications.withdraw",
 ] as const;
 export type ConfirmToolName = (typeof confirmToolNames)[number];
 
@@ -116,6 +117,12 @@ export const applicationApplySchema = z
   })
   .strict();
 
+export const applicationWithdrawSchema = z
+  .object({
+    applicationId: z.string().uuid(),
+  })
+  .strict();
+
 export const publicInsightsSchema = z.object({
   scope: z.literal("public-marketplace"),
   liveCampaigns: z.number().int().nonnegative(),
@@ -149,6 +156,7 @@ export const agentToolInputSchemas = {
   "marketplace.search": marketplaceSearchInputSchema,
   "applications.mine": z.object({}).strict(),
   "applications.apply": applicationApplySchema,
+  "applications.withdraw": applicationWithdrawSchema,
   "insights.public": z.object({}).strict(),
   "messages.status": z.object({}).strict(),
 } as const;
@@ -167,6 +175,7 @@ export const agentToolOutputSchemas = {
   "marketplace.search": marketplaceSearchResultSchema,
   "applications.mine": applicationListSchema,
   "applications.apply": z.union([confirmationProposalSchema, applicationSchema]),
+  "applications.withdraw": z.union([confirmationProposalSchema, applicationSchema]),
   "insights.public": publicInsightsSchema,
   "messages.status": messagesStatusSchema,
 } as const;

@@ -70,7 +70,10 @@ const statusRoute = registerApiRoute("/status", {
   method: "GET",
   requiresAuth: false,
   handler: async (c) => {
-    return c.json({ llm: Boolean(agentEnv.OPENAI_API_KEY) });
+    return c.json({
+      llm: Boolean(agentEnv.OPENAI_API_KEY) || agentEnv.LYNK_SCRIPT_MODEL,
+      mode: agentEnv.LYNK_SCRIPT_MODEL ? "script" : agentEnv.OPENAI_API_KEY ? "openai" : "unavailable",
+    });
   },
 });
 

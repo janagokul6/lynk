@@ -13,6 +13,13 @@ const emptyToUndefined = (value: unknown) => {
   return trimmed.length === 0 ? undefined : trimmed;
 };
 
+const booleanFromEnv = z.preprocess((value) => {
+  if (value === undefined || value === "") return false;
+  if (value === true || value === "true" || value === "1") return true;
+  if (value === false || value === "false" || value === "0") return false;
+  return value;
+}, z.boolean());
+
 const schema = z.object({
   OPENAI_API_KEY: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
   LYNK_API_URL: z.string().url().default("http://127.0.0.1:43124"),
@@ -21,6 +28,7 @@ const schema = z.object({
   AGENT_HOST: z.string().min(1).default("127.0.0.1"),
   AGENT_TURN_LIMIT: z.coerce.number().int().positive().default(30),
   AGENT_TURN_WINDOW_MS: z.coerce.number().int().positive().default(10 * 60 * 1000),
+  LYNK_SCRIPT_MODEL: booleanFromEnv.default(false),
 });
 
 export const agentEnv = schema.parse({
@@ -31,6 +39,7 @@ export const agentEnv = schema.parse({
   AGENT_HOST: process.env.AGENT_HOST,
   AGENT_TURN_LIMIT: process.env.AGENT_TURN_LIMIT,
   AGENT_TURN_WINDOW_MS: process.env.AGENT_TURN_WINDOW_MS,
+  LYNK_SCRIPT_MODEL: process.env.LYNK_SCRIPT_MODEL,
 });
 
 if (process.env.NODE_ENV === "production") {
@@ -40,8 +49,8 @@ if (process.env.NODE_ENV === "production") {
   }
 }
 
-if (!agentEnv.OPENAI_API_KEY) {
+if (!agentEnv.OPENAI_API_KEY && !agentEnv.LYNK_SCRIPT_MODEL) {
   console.warn(
-    "[@lynk/agent] OPENAI_API_KEY is unset — Mastra boots, but brand chat replies will fail until it is set."
+    "[@lynk/agent] OPENAI_API_KEY is unset — Mastra boots, but chat replies fail until it is set. LYNK_SCRIPT_MODEL=1 uses the deterministic tool model."
   );
 }

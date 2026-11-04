@@ -7,7 +7,14 @@ import type {
 import { estimateRoi } from "@lynk/shared";
 import { db } from "../../lib/db.js";
 import { campaign, creatorProfile } from "../../db/schema.js";
-import { createApplication, decideApplication, getApplicationById, listForBrand, listForInfluencer } from "../applications/applications.service.js";
+import {
+  createApplication,
+  decideApplication,
+  getApplicationById,
+  listForBrand,
+  listForInfluencer,
+  withdrawApplication,
+} from "../applications/applications.service.js";
 import { createCampaign } from "../campaigns/campaigns.service.js";
 import { listMarketplaceCampaigns } from "../marketplace/marketplace.service.js";
 import { addToShortlist, createGroup, listShortlist, removeFromShortlist } from "../shortlist/shortlist.service.js";
@@ -181,6 +188,7 @@ export async function searchMarketplace(input: {
       payMax: row.payMax,
       location: row.location,
       compensationType: row.compensationType,
+      description: row.description,
     })),
   };
 }
@@ -287,6 +295,28 @@ export async function decideApplicant(
     );
   }
   const result = await decideApplication(input.applicationId, brandId, input.decision);
+  if (!result.ok) throw new ToolError(result.error, result.status);
+  return result.application;
+}
+
+export async function withdrawOwnApplication(
+  userId: string | undefined,
+  input: { applicationId: string },
+  confirmed: boolean
+) {
+  const influencerId = requireUser(userId);
+  const existing = await getApplicationById(input.applicationId);
+  if (!existing || existing.influencerId !== influencerId) {
+    throw new ToolError("Application not found", 404);
+  }
+  if (!confirmed) {
+    return confirmationProposal(
+      "Withdraw application",
+      `Withdraw your application to “${existing.campaignTitle}”.`,
+      input
+    );
+  }
+  const result = await withdrawApplication(input.applicationId, influencerId);
   if (!result.ok) throw new ToolError(result.error, result.status);
   return result.application;
 }

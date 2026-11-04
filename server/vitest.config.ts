@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["**/*.test.ts"],
+    exclude: ["e2e/**", "node_modules/**", "dist/**"],
     setupFiles: ["./vitest.setup.ts"],
     fileParallelism: false,
     env: {

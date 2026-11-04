@@ -16,3 +16,5 @@ export * from "./shortlist.js";
 export * from "./home.js";
 export * from "./agent-io.js";
 export * from "./tool-access.js";
+export * from "./script-directive.js";
+export * from "./demo-accounts.js";

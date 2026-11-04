@@ -13,6 +13,8 @@
     "test": "pnpm -r run test",
     "check": "pnpm typecheck && pnpm lint && pnpm test",
     "test:e2e": "pnpm --filter @lynk/client test:e2e",
+    "test:agent-loop": "pnpm --filter @lynk/server test:e2e",
+    "seed:demo": "pnpm --filter @lynk/server seed:demo",
     "db:push": "pnpm --filter @lynk/server db:push",
     "prepare": "husky"
   },

@@ -1,6 +1,7 @@
 "use client";
 
-import { useCopilotAction, useCopilotChatHeadless_c } from "@copilotkit/react-core";
+import { useState } from "react";
+import { useCopilotAction, useCopilotChat } from "@copilotkit/react-core";
 import { CopilotChat } from "@copilotkit/react-ui";
 import {
   ApplicationActionCards,
@@ -16,7 +17,7 @@ import { HomeViewToggle } from "@/components/home/HomeViewToggle";
 import type { HomeView } from "@/lib/home-view";
 
 function SuggestedPrompts({ prompts }: { prompts: readonly string[] }) {
-  const { sendMessage, isLoading } = useCopilotChatHeadless_c();
+  const { appendMessage, isLoading } = useCopilotChat();
   return (
     <div className="flex flex-wrap gap-2">
       {prompts.map((prompt) => (
@@ -25,11 +26,13 @@ function SuggestedPrompts({ prompts }: { prompts: readonly string[] }) {
           type="button"
           disabled={isLoading}
           onClick={() =>
-            sendMessage({
-              id: crypto.randomUUID(),
-              role: "user",
-              content: prompt,
-            })
+            void appendMessage(
+              {
+                id: crypto.randomUUID(),
+                role: "user",
+                content: prompt,
+              } as never
+            )
           }
           className="rounded-full border border-border px-3 py-1 text-left text-[11px] font-semibold text-slate-600 hover:border-primary hover:text-primary disabled:opacity-50 dark:text-slate-300"
         >
@@ -51,6 +54,7 @@ export function RoleAgentChat({
   view: HomeView;
   onToggle: () => void;
 }) {
+  const [chatError, setChatError] = useState<string | null>(null);
   useCopilotAction({
     name: "creators_match",
     available: "disabled",
@@ -159,6 +163,27 @@ export function RoleAgentChat({
     },
   });
   useCopilotAction({
+    name: "applications_withdraw",
+    available: "disabled",
+    render: ({ result }) => {
+      const proposal = result as
+        | { needsConfirmation?: boolean; summary?: string; input?: Record<string, unknown> }
+        | undefined;
+      if (!proposal?.needsConfirmation || !proposal.input) {
+        return <p className="text-sm text-slate-500">Application updated.</p>;
+      }
+      return (
+        <ConfirmToolCard
+          title="Withdraw application"
+          summary={proposal.summary ?? "Withdraw this application."}
+          tool="applications.withdraw"
+          input={proposal.input}
+          confirmLabel="Withdraw"
+        />
+      );
+    },
+  });
+  useCopilotAction({
     name: "messages_status",
     available: "disabled",
     render: ({ result }) => (
@@ -169,9 +194,17 @@ export function RoleAgentChat({
   return (
     <div className="flex h-full min-h-[28rem] flex-col gap-3">
       <SuggestedPrompts prompts={prompts} />
-      <div className="min-h-0 flex-1">
+      <div className="min-h-[24rem] flex-1">
+        {chatError ? (
+          <div role="alert" data-testid="chat-error" className="rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {chatError}
+          </div>
+        ) : null}
         <CopilotChat
           className="h-full"
+          onError={() => {
+            setChatError("The assistant hit an error. Nothing was changed.");
+          }}
           labels={{
             title: role === "brand" ? "Lynk for brands" : "Lynk for creators",
             initial:
