@@ -54,7 +54,8 @@ pnpm test:e2e   # Playwright
 | Creators | `GET /api/creators/match`, `POST /api/creators/sync` |
 | Connections | `GET/POST /api/connections`, `DELETE /api/connections/:platform` |
 | Storage | `POST /api/storage/sign` (+ local upload fallback or R2) |
-| Tools (agents) | `GET /api/tools`, `POST /api/tools/:name` (`x-agent-key` or session) |
+| Tools (agents) | `GET /api/tools`, `POST /api/tools/:name` (`x-agent-key` allowlist, or session) |
+| Applications | `POST /api/applications`, `GET /api/applications`, withdraw / accept / reject |
 | AG-UI | Mastra `/copilotkit` (CopilotKit runtime) |
 
 ## Agentic stack

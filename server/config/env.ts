@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { productionAgentKeyIssue } from "@lynk/shared";
 import { decodeTokenEncryptionKey } from "../lib/token-key.js";
 
 const booleanFromEnv = z.preprocess((value) => {
@@ -30,9 +31,21 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(15 * 60 * 1000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_AUTH_MAX: z.coerce.number().default(5),
+  TRUST_PROXY: z.coerce.number().int().min(0).max(32).default(0),
+  MATCH_MAX_DISTANCE: z.coerce.number().min(0).max(2).default(0.75),
   TOKEN_ENCRYPTION_KEY: z.string().min(1).optional(),
   ALLOW_CLIENT_SOCIAL_TOKENS: booleanFromEnv.default(false),
 }).superRefine((data, ctx) => {
+  if (data.NODE_ENV === "production") {
+    const agentKeyIssue = productionAgentKeyIssue(data.AGENT_API_KEY);
+    if (agentKeyIssue) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["AGENT_API_KEY"],
+        message: agentKeyIssue,
+      });
+    }
+  }
   if (data.NODE_ENV === "production" && !data.TOKEN_ENCRYPTION_KEY) {
     ctx.addIssue({
       code: "custom",
@@ -61,8 +74,12 @@ const envSchema = z.object({
 
 export type Env = z.infer<typeof envSchema>;
 
+export function evaluateEnv(source: NodeJS.ProcessEnv) {
+  return envSchema.safeParse(source);
+}
+
 function loadEnv(): Env {
-  const result = envSchema.safeParse(process.env);
+  const result = evaluateEnv(process.env);
   if (!result.success) {
     const errors = result.error.flatten().fieldErrors;
     const message = Object.entries(errors)

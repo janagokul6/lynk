@@ -7,3 +7,5 @@ export * from "./match.js";
 export * from "./connections.js";
 export * from "./tools.js";
 export * from "./auth.js";
+export * from "./application.js";
+export * from "./agent-key.js";

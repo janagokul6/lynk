@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { productionAgentKeyIssue } from "@lynk/shared";
 import { z } from "zod";
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -17,6 +18,7 @@ const schema = z.object({
   LYNK_API_URL: z.string().url().default("http://127.0.0.1:43124"),
   AGENT_API_KEY: z.preprocess(emptyToUndefined, z.string().min(16)),
   CLIENT_ORIGIN: z.string().url().default("http://127.0.0.1:43123"),
+  AGENT_HOST: z.string().min(1).default("127.0.0.1"),
 });
 
 export const agentEnv = schema.parse({
@@ -24,7 +26,15 @@ export const agentEnv = schema.parse({
   LYNK_API_URL: process.env.LYNK_API_URL,
   AGENT_API_KEY: process.env.AGENT_API_KEY,
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN,
+  AGENT_HOST: process.env.AGENT_HOST,
 });
+
+if (process.env.NODE_ENV === "production") {
+  const issue = productionAgentKeyIssue(agentEnv.AGENT_API_KEY);
+  if (issue) {
+    throw new Error(issue);
+  }
+}
 
 if (!agentEnv.OPENAI_API_KEY) {
   console.warn(

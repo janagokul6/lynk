@@ -238,16 +238,46 @@ export const paymentIntent = pgTable(
   ]
 );
 
+export const application = pgTable(
+  "application",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaignId: uuid("campaignId")
+      .notNull()
+      .references(() => campaign.id, { onDelete: "cascade" }),
+    influencerId: varchar("influencerId", { length: 255 })
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: varchar("status", { length: 32 }).notNull().default("pending"),
+    message: text("message"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("application_campaign_influencer_unique").on(table.campaignId, table.influencerId),
+    index("application_campaign_idx").on(table.campaignId),
+    index("application_influencer_idx").on(table.influencerId),
+    index("application_status_idx").on(table.status),
+  ]
+);
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
   campaigns: many(campaign),
   socialConnections: many(socialConnection),
   payoutAccounts: many(payoutAccount),
+  applications: many(application),
 }));
 
-export const campaignRelations = relations(campaign, ({ one }) => ({
+export const campaignRelations = relations(campaign, ({ one, many }) => ({
   user: one(user, { fields: [campaign.userId], references: [user.id] }),
+  applications: many(application),
+}));
+
+export const applicationRelations = relations(application, ({ one }) => ({
+  campaign: one(campaign, { fields: [application.campaignId], references: [campaign.id] }),
+  influencer: one(user, { fields: [application.influencerId], references: [user.id] }),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({

@@ -9,6 +9,9 @@ export const toolNames = [
 ] as const;
 export type ToolName = (typeof toolNames)[number];
 
+/** Tools an `x-agent-key` caller may invoke. Sync stays on a real session. */
+export const agentKeyToolAllowlist = ["health.check", "creators.match"] as const satisfies readonly ToolName[];
+
 export const toolDescriptions: Record<ToolName, string> = {
   "health.check": "Liveness probe for agents and ops",
   "creators.match": "Match creators by query, niches, platform",

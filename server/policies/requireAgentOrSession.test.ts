@@ -38,6 +38,21 @@ describe("requireAgentOrSession", () => {
     await requireAgentOrSession(req, res, next);
     expect(next).toHaveBeenCalledOnce();
     expect(res.status).not.toHaveBeenCalled();
+    expect((req as { agentAuth?: string }).agentAuth).toBe("key");
+  });
+
+  it("rejects a key that does not match", async () => {
+    getSession.mockResolvedValue(null);
+    const { requireAgentOrSession } = await import("./requireAgentOrSession.js");
+    const req = {
+      header: (name: string) => (name === "x-agent-key" ? "not-the-agent-key" : undefined),
+      headers: {},
+    } as unknown as Request;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as unknown as Response;
+    const next = vi.fn() as NextFunction;
+    await requireAgentOrSession(req, res, next);
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(401);
   });
 
   it("allows a session without agent key", async () => {

@@ -7,7 +7,7 @@ import { apiReference } from "@scalar/express-api-reference";
 import { auth } from "./lib/auth.js";
 import { env } from "./config/env.js";
 import { getOpenApiSpec } from "./config/openapi.js";
-import { requestLogger, errorHandler, generalLimiter, authLimiter } from "./middleware/index.js";
+import { requestLogger, errorHandler, rateLimitByRoute } from "./middleware/index.js";
 import { healthRouter } from "./modules/health/health.routes.js";
 import { authRouter } from "./modules/auth/auth.routes.js";
 import { discoveryRouter } from "./modules/discovery/discovery.routes.js";
@@ -17,8 +17,11 @@ import { creatorsRouter } from "./modules/creators/creators.routes.js";
 import { connectionsRouter } from "./modules/connections/connections.routes.js";
 import { storageRouter } from "./modules/storage/storage.routes.js";
 import { toolsRouter } from "./modules/tools/tools.routes.js";
+import { applicationsRouter } from "./modules/applications/applications.routes.js";
 
 const app = express();
+
+app.set("trust proxy", env.TRUST_PROXY);
 
 app.use(
   cors({
@@ -29,10 +32,8 @@ app.use(
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(compression());
 
-app.use("/api/auth", authLimiter);
+app.use(rateLimitByRoute);
 app.all("/api/auth/{*any}", toNodeHandler(auth));
-
-app.use(generalLimiter);
 app.use(express.json({ limit: "2mb" }));
 app.use(requestLogger);
 
@@ -52,6 +53,7 @@ app.use("/api/health", healthRouter);
 app.use("/api", authRouter);
 app.use("/api/discovery", discoveryRouter);
 app.use("/api/campaigns", campaignsRouter);
+app.use("/api/applications", applicationsRouter);
 app.use("/api/marketplace", marketplaceRouter);
 app.use("/api/creators", creatorsRouter);
 app.use("/api/connections", connectionsRouter);

@@ -30,111 +30,6 @@ type DiscoveryInfluencer = {
   priceValue: number;
 };
 
-const INFLUENCERS = [
-  {
-    id: 1,
-    name: "Sarah Fit",
-    handle: "@sarahfit_official",
-    category: "Fitness",
-    imageUrl: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=80&w=600",
-    followers: "1.2M",
-    followersCount: 1200000,
-    engagement: "4.3%",
-    engagementRate: 4.3,
-    verified: true,
-    platform: "Instagram",
-    region: "USA",
-    gender: "Female",
-    priceRange: "$$ (Mid)",
-    priceValue: 2,
-  },
-  {
-    id: 2,
-    name: "Gaming Pro",
-    handle: "@game_master_x",
-    category: "Gaming",
-    imageUrl: "https://images.unsplash.com/photo-1594381898411-846e7d193883?auto=format&fit=crop&q=80&w=600",
-    followers: "850k",
-    followersCount: 850000,
-    engagement: "5.1%",
-    engagementRate: 5.1,
-    verified: true,
-    platform: "YouTube",
-    region: "UK",
-    gender: "Male",
-    priceRange: "$$$ (High)",
-    priceValue: 3,
-  },
-  {
-    id: 3,
-    name: "Elena Styles",
-    handle: "@elena_daily_look",
-    category: "Fashion",
-    imageUrl: "https://images.unsplash.com/photo-1544367563-12123d8965cd?auto=format&fit=crop&q=80&w=600",
-    followers: "3.4M",
-    followersCount: 3400000,
-    engagement: "3.1%",
-    engagementRate: 3.1,
-    verified: false,
-    platform: "Instagram",
-    region: "France",
-    gender: "Female",
-    priceRange: "$$$$ (Premium)",
-    priceValue: 4,
-  },
-  {
-    id: 4,
-    name: "Yoga with Jen",
-    handle: "@jen_yoga",
-    category: "Wellness",
-    imageUrl: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&q=80&w=600",
-    followers: "450k",
-    followersCount: 450000,
-    engagement: "6.4%",
-    engagementRate: 6.4,
-    verified: true,
-    platform: "TikTok",
-    region: "Canada",
-    gender: "Female",
-    priceRange: "$ (Budget)",
-    priceValue: 1,
-  },
-  {
-    id: 5,
-    name: "David Tech",
-    handle: "@david_reviews",
-    category: "Technology",
-    imageUrl: "https://images.unsplash.com/photo-1505236858219-8359eb29e329?auto=format&fit=crop&q=80&w=600",
-    followers: "2.1M",
-    followersCount: 2100000,
-    engagement: "2.8%",
-    engagementRate: 2.8,
-    verified: true,
-    platform: "YouTube",
-    region: "USA",
-    gender: "Male",
-    priceRange: "$$$ (High)",
-    priceValue: 3,
-  },
-  {
-    id: 6,
-    name: "Chef Mario",
-    handle: "@mario_cooks",
-    category: "Food",
-    imageUrl: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&q=80&w=600",
-    followers: "920k",
-    followersCount: 920000,
-    engagement: "4.9%",
-    engagementRate: 4.9,
-    verified: false,
-    platform: "Instagram",
-    region: "Italy",
-    gender: "Male",
-    priceRange: "$$ (Mid)",
-    priceValue: 2,
-  }
-];
-
 const CATEGORIES = ["All", "Fitness", "Gaming", "Fashion", "Wellness", "Technology", "Food"];
 const SORT_OPTIONS = ["Relevance", "Followers: High to Low", "Engagement: High to Low"];
 const PLATFORMS = ["All", "Instagram", "YouTube", "TikTok"];
@@ -233,29 +128,34 @@ export default function DiscoverySearchPage() {
     return () => controller.abort();
   }, [debouncedSuggestionTerm, isFocused]);
 
-  // Clear remote mode when input is cleared
   useEffect(() => {
-    if (searchTerm.trim().length === 0) {
+    const query = debouncedSearchTerm.trim();
+    if (!query) {
       setRemoteInfluencers(null);
       setRemoteInfluencersLoading(false);
+      return;
     }
-  }, [searchTerm]);
 
-  const runRemoteSearch = async (q: string) => {
-    const query = q.trim();
-    if (!query) return;
+    let active = true;
     setRemoteInfluencersLoading(true);
-    try {
-      const res = await api.get<{ influencers: DiscoveryInfluencer[] }>("/api/discovery/search", {
-        params: { q: query },
+    api
+      .get<{ influencers: DiscoveryInfluencer[] }>("/api/discovery/search", { params: { q: query } })
+      .then((res) => {
+        if (!active) return;
+        setRemoteInfluencers(res.data?.influencers ?? []);
+      })
+      .catch(() => {
+        if (!active) return;
+        setRemoteInfluencers([]);
+      })
+      .finally(() => {
+        if (active) setRemoteInfluencersLoading(false);
       });
-      setRemoteInfluencers(res.data?.influencers ?? []);
-    } catch {
-      setRemoteInfluencers([]);
-    } finally {
-      setRemoteInfluencersLoading(false);
-    }
-  };
+
+    return () => {
+      active = false;
+    };
+  }, [debouncedSearchTerm]);
 
   // Click outside for sorting dropdown
   useEffect(() => {
@@ -269,21 +169,27 @@ export default function DiscoverySearchPage() {
   }, []);
 
   const filteredInfluencers = useMemo(() => {
-    if (remoteInfluencers) return remoteInfluencers;
-
-    const result = INFLUENCERS.filter(inf => {
-      const matchesSearch = inf.handle.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        inf.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
+    const source = remoteInfluencers ?? [];
+    const result = source.filter((inf) => {
       const matchesCategory = selectedCategory === "All" || inf.category === selectedCategory;
       const matchesVerified = !filters.verifiedOnly || inf.verified;
       const matchesFollowers = inf.followersCount >= filters.followersMin && inf.followersCount <= filters.followersMax;
       const matchesEngagement = inf.engagementRate >= filters.engagementMin;
       const matchesPlatform = filters.platform === "All" || inf.platform === filters.platform;
       const matchesRegion = filters.region === "All" || inf.region === filters.region;
-      const matchesGender = filters.gender === "All" || inf.gender === filters.gender;
-      const matchesPrice = inf.priceValue >= filters.priceMin && inf.priceValue <= filters.priceMax;
-
-      return matchesSearch && matchesCategory && matchesVerified && matchesFollowers && matchesEngagement && matchesPlatform && matchesRegion && matchesGender && matchesPrice;
+      const matchesGender = filters.gender === "All" || inf.gender === "—" || inf.gender === filters.gender;
+      const matchesPrice =
+        inf.priceValue <= 0 || (inf.priceValue >= filters.priceMin && inf.priceValue <= filters.priceMax);
+      return (
+        matchesCategory &&
+        matchesVerified &&
+        matchesFollowers &&
+        matchesEngagement &&
+        matchesPlatform &&
+        matchesRegion &&
+        matchesGender &&
+        matchesPrice
+      );
     });
 
     if (sortOption === "Followers: High to Low") {
@@ -293,7 +199,7 @@ export default function DiscoverySearchPage() {
     }
 
     return result;
-  }, [debouncedSearchTerm, selectedCategory, filters, sortOption, remoteInfluencers]);
+  }, [selectedCategory, filters, sortOption, remoteInfluencers]);
 
   const openFilter = () => {
     setDraftFilters(filters);
@@ -358,6 +264,9 @@ export default function DiscoverySearchPage() {
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") setDebouncedSearchTerm(searchTerm.trim());
+              }}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setTimeout(() => setIsFocused(false), 200)}
               className="block w-full pl-10 pr-10 py-2.5 bg-slate-50 dark:bg-surface-dark/60 border border-slate-200 dark:border-border rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-muted-foreground focus:outline-none focus:border-primary-500/50 focus:ring-1 focus:ring-primary-500/50 transition-all"
@@ -393,11 +302,11 @@ export default function DiscoverySearchPage() {
                     <div
                       key={`${sug.platform}-${sug.id}`}
                       className="flex items-center gap-3 px-4 py-2 hover:bg-slate-50 dark:hover:bg-surface-card cursor-pointer"
-                      onClick={async () => {
-                        setSearchTerm(sug.handle);
+                      onClick={() => {
+                        setSearchTerm(sug.name);
+                        setDebouncedSearchTerm(sug.name);
                         setIsFocused(false);
                         setSuggestions([]);
-                        await runRemoteSearch(sug.name);
                       }}
                     >
                       {sug.imageUrl ? (
@@ -563,11 +472,25 @@ export default function DiscoverySearchPage() {
           ))}
         </div>
 
-        {filteredInfluencers.length === 0 && (
+        {remoteInfluencersLoading && (
+          <div className="py-16 text-center text-sm font-medium text-slate-500 dark:text-muted-foreground">
+            Searching creators…
+          </div>
+        )}
+
+        {!remoteInfluencersLoading && remoteInfluencers === null && (
           <div className="py-20 text-center flex flex-col items-center">
             <span className="material-symbols-outlined text-slate-300 dark:text-muted-foreground/30" style={{ fontSize: 64 }}>person_search</span>
-            <p className="mt-4 text-slate-600 dark:text-slate-300 font-semibold">No influencers found</p>
-            <p className="text-sm text-slate-500 dark:text-muted-foreground mt-1">Try adjusting your filters or search term</p>
+            <p className="mt-4 text-slate-600 dark:text-slate-300 font-semibold">Search for a creator</p>
+            <p className="text-sm text-slate-500 dark:text-muted-foreground mt-1">Results come from Lynk discovery. Try a niche, name, or handle.</p>
+          </div>
+        )}
+
+        {!remoteInfluencersLoading && remoteInfluencers !== null && filteredInfluencers.length === 0 && (
+          <div className="py-20 text-center flex flex-col items-center">
+            <span className="material-symbols-outlined text-slate-300 dark:text-muted-foreground/30" style={{ fontSize: 64 }}>person_search</span>
+            <p className="mt-4 text-slate-600 dark:text-slate-300 font-semibold">No matching creators</p>
+            <p className="text-sm text-slate-500 dark:text-muted-foreground mt-1">Try a closer niche, name, or handle.</p>
             <button
               onClick={resetFilters}
               className="mt-6 text-primary-500 font-bold text-sm hover:underline"
@@ -577,15 +500,6 @@ export default function DiscoverySearchPage() {
           </div>
         )}
 
-        {/* Load more */}
-        {filteredInfluencers.length > 0 && (
-          <button
-            type="button"
-            className="w-full mt-4 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-surface-dark py-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-surface-card transition-colors shadow-sm"
-          >
-            Load more influencers
-          </button>
-        )}
       </div>
 
       {/* Filter Drawer Overlay */}

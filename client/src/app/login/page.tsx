@@ -7,7 +7,9 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { APP_NAME } from "@/lib/constants";
+import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { homePathForRole } from "@lynk/shared";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,7 +27,12 @@ export default function LoginPage() {
       return;
     }
     toast.success("Welcome back");
-    router.push("/brand/dashboard");
+    try {
+      const me = await api.get<{ user?: { role?: string } } | null>("/api/me");
+      router.push(homePathForRole(me.data?.user?.role));
+    } catch {
+      router.push("/role");
+    }
   }
 
   return (
