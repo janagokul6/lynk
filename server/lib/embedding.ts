@@ -8,7 +8,7 @@ function hashToken(token: string): number {
   return h >>> 0;
 }
 
-/** Deterministic local embedding; swap for a model provider later without schema changes. */
+/** Deterministic local embedding. Used when OPENAI_API_KEY is unset or the provider fails. */
 export function embedText(text: string, dims = DIMS): number[] {
   const vec = new Array<number>(dims).fill(0);
   const tokens = text
@@ -28,6 +28,33 @@ export function embedText(text: string, dims = DIMS): number[] {
   for (const v of vec) norm += v * v;
   norm = Math.sqrt(norm) || 1;
   return vec.map((v) => v / norm);
+}
+
+export async function resolveEmbedding(text: string): Promise<number[]> {
+  const key = process.env.OPENAI_API_KEY?.trim();
+  if (key) {
+    try {
+      const response = await fetch("https://api.openai.com/v1/embeddings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "text-embedding-3-small",
+          input: text.slice(0, 8000),
+        }),
+      });
+      if (response.ok) {
+        const json = (await response.json()) as { data?: { embedding?: number[] }[] };
+        const embedding = json.data?.[0]?.embedding;
+        if (embedding && embedding.length === DIMS) return embedding;
+      }
+    } catch {
+      // Hash fallback keeps search available when the provider is down.
+    }
+  }
+  return embedText(text);
 }
 
 export function vectorLiteral(values: number[]): string {

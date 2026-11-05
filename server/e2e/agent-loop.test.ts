@@ -288,7 +288,7 @@ describe("agent loop against the running stack", () => {
     expect(insights.combined).not.toContain("I can film this next week");
 
     const messages = await turn("influencer", influencer, "messages_status", {});
-    expect(messages.combined).toContain("Messaging is not available yet");
+    expect(messages.combined).toContain("Messaging is available");
   });
 
   it("blocks the wrong role, missing and expired sessions, the agent key, bad args, and a down API", async () => {

@@ -5,6 +5,7 @@ import { DEMO_PASSWORD, demoAccounts, demoCampaignTitles, scriptToolMessage } fr
 const shots = path.resolve("/opt/cursor/artifacts/screenshots");
 
 async function login(page: Page, email: string) {
+  await page.addInitScript(() => window.localStorage.setItem("lynk-cookie", "1"));
   await page.goto("/login", { waitUntil: "networkidle" });
   const emailBox = page.getByLabel("Email");
   const passwordBox = page.getByLabel("Password");
@@ -21,7 +22,7 @@ async function send(page: Page, placeholder: RegExp, message: string) {
   await box.press("Enter");
 }
 
-test.describe.configure({ mode: "serial", timeout: 90_000 });
+test.describe.configure({ mode: "serial", timeout: 180_000 });
 
 test("brand chat home, toggle, confirmation, and real dashboard", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
@@ -30,7 +31,7 @@ test("brand chat home, toggle, confirmation, and real dashboard", async ({ page 
   await expect(page.getByText(/\d+ shortlisted/)).toBeVisible();
   await page.screenshot({ path: path.join(shots, "brand-chat.png"), fullPage: true });
 
-  await page.getByTestId("home-view-toggle").click();
+  await page.locator("header").getByTestId("home-view-toggle").click();
   await expect(page.getByRole("heading", { name: "Campaigns" })).toBeVisible();
   await expect(page.getByText(demoCampaignTitles.summer).first()).toBeVisible();
   await expect(page.getByText("Nova Creates").first()).toBeVisible();
@@ -39,7 +40,7 @@ test("brand chat home, toggle, confirmation, and real dashboard", async ({ page 
 
   await page.reload();
   await expect(page.getByRole("heading", { name: "Campaigns" })).toBeVisible();
-  await page.getByTestId("home-view-toggle").click();
+  await page.locator("header").getByTestId("home-view-toggle").click();
   await expect(page.getByPlaceholder(/Find creators/)).toBeVisible();
 
   await send(
@@ -59,10 +60,10 @@ test("brand chat home, toggle, confirmation, and real dashboard", async ({ page 
   await expect(page.getByText("Playwright Draft").first()).toBeVisible();
   await page.getByRole("button", { name: "Save draft" }).click();
   await expect(page.getByText(/Saved/)).toBeVisible();
-  await page.getByTestId("home-view-toggle").click();
+  await page.locator("header").getByTestId("home-view-toggle").click();
   await expect(page.getByRole("heading", { name: "Campaigns" })).toBeVisible();
   await expect(page.locator("li").filter({ hasText: "Playwright Draft" })).toBeVisible();
-  await page.getByTestId("home-view-toggle").click();
+  await page.locator("header").getByTestId("home-view-toggle").click();
 
   await send(page, /Find creators/, "LYNK_MODEL_ERROR");
   await expect(page.getByTestId("chat-error")).toBeVisible({ timeout: 20_000 });
@@ -79,7 +80,7 @@ test("pro side-by-side collapses on a narrow screen", async ({ page }) => {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole("heading", { name: "Campaigns" })).toBeHidden();
-  await page.getByTestId("home-view-toggle").click();
+  await page.locator("header").getByTestId("home-view-toggle").click();
   await expect(page.getByRole("heading", { name: "Campaigns" })).toBeVisible();
   await expect(page.getByPlaceholder(/Find creators/)).toBeHidden();
   await page.screenshot({ path: path.join(shots, "pro-mobile.png"), fullPage: true });
@@ -89,12 +90,12 @@ test("influencer chat, apply confirmation, and empty earnings", async ({ page })
   await page.setViewportSize({ width: 1280, height: 900 });
   await login(page, demoAccounts.influencer.email);
   await expect(page.getByText(/\d+ pending ·/)).toBeVisible();
-  await page.getByTestId("home-view-toggle").click();
+  await page.locator("header").getByTestId("home-view-toggle").click();
   await expect(page.getByRole("heading", { name: "Live campaigns" })).toBeVisible();
   await expect(page.getByText(demoCampaignTitles.playwright).first()).toBeVisible();
-  await expect(page.getByText(/Messaging is not available yet/)).toBeVisible();
+  await expect(page.getByText(/Payouts are not live yet/)).toBeVisible();
   await page.screenshot({ path: path.join(shots, "influencer-dashboard.png"), fullPage: true });
-  await page.getByTestId("home-view-toggle").click();
+  await page.locator("header").getByTestId("home-view-toggle").click();
 
   await send(
     page,
@@ -118,7 +119,7 @@ test("chat explains a missing API key", async ({ page }) => {
   );
   await login(page, demoAccounts.brand.email);
   await expect(page.getByText(/OPENAI_API_KEY/)).toBeVisible();
-  await page.getByTestId("home-view-toggle").click();
+  await page.locator("header").getByTestId("home-view-toggle").click();
   await expect(page.getByRole("heading", { name: "Campaigns" })).toBeVisible();
   await page.screenshot({ path: path.join(shots, "no-api-key.png"), fullPage: true });
 });

@@ -16,7 +16,7 @@ Locked 2026-10-30. Change only via explicit decision, not drive-by refactors.
 | 10 | Creators | Postgres sync via pg-boss; APIs only in workers |
 | 11 | Match/search | Postgres + pgvector |
 | 12 | Files | Cloudflare R2 (S3 API) |
-| 13 | Realtime | Socket.IO deferred |
+| 13 | Realtime | Socket.IO stays off the boot path. Collaboration messages poll `GET /api/messages/:id`. |
 | 14 | Payments | schema-ready only (Stripe Connect / Razorpay later) |
 | 15 | Env | Zod on server + typed public client env |
 | 16 | API client | Axios + TanStack Query per domain |

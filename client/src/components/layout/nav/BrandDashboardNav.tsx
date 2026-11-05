@@ -4,9 +4,9 @@ import type { NavItem } from "../BottomNav";
 const BRAND_NAV_ITEMS: NavItem[] = [
   { label: "Home", icon: "chat", href: "/brand/home" },
   { label: "Discover", icon: "explore", href: "/brand/discovery" },
-  { label: "Calculator", icon: "calculate", href: "/brand/roi-calculator" },
   { label: "Campaigns", icon: "campaign", href: "/brand/campaigns" },
-  { label: "Profile", icon: "person", href: "/brand/profile" },
+  { label: "Applicants", icon: "group", href: "/brand/applications" },
+  { label: "Inbox", icon: "mail", href: "/messages" },
 ];
 
 export interface BrandDashboardNavProps {

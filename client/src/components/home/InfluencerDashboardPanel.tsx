@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { HomeCampaignCard } from "@lynk/shared";
+import { formatInrBand, type HomeCampaignCard } from "@lynk/shared";
 import { api } from "@/lib/api";
 
 type ApplicationRow = {
@@ -53,7 +53,7 @@ export function InfluencerDashboardPanel() {
               <li key={campaign.id} className="rounded-xl border border-border bg-white px-4 py-3 dark:bg-surface-dark">
                 <p className="font-semibold text-slate-900 dark:text-white">{campaign.title}</p>
                 <p className="text-xs text-slate-500">
-                  {campaign.brandName || "Brand"} · {campaign.payMin}–{campaign.payMax}
+                  {campaign.brandName || "Brand"} · {formatInrBand(campaign.payMin, campaign.payMax)}
                 </p>
               </li>
             ))}
@@ -83,7 +83,7 @@ export function InfluencerDashboardPanel() {
 
       <section className="space-y-3">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white">Earnings and messages</h2>
-        <Empty>Earnings are not available yet. Messaging is not available yet.</Empty>
+        <Empty>Payouts are not live yet. Messages open from an accepted collaboration.</Empty>
       </section>
     </div>
   );

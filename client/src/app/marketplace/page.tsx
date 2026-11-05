@@ -91,12 +91,13 @@ function ApplyControl({
     );
   }
 
-  if (!open) {
+  if (!open || role == null) {
     return (
       <button
         type="button"
         onClick={onOpen}
-        className="w-full py-2.5 rounded-lg font-bold text-sm bg-primary text-white shadow-lg shadow-primary/25"
+        disabled={role == null}
+        className="w-full py-2.5 rounded-lg font-bold text-sm bg-primary text-white shadow-lg shadow-primary/25 disabled:opacity-60"
       >
         Apply Now
       </button>
@@ -423,12 +424,12 @@ export default function MarketplacePage() {
                     <Icon name="local_fire_department" size={14} className="text-orange-400" />
                     <span className="text-xs font-bold text-orange-400">Trending</span>
                   </div>
-                ) : (
+                ) : campaign.matchScore != null ? (
                   <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full ${campaign.matchScore >= 90 ? "bg-emerald-500/20 border border-emerald-500/30" : "bg-primary/20 border border-primary/30"}`}>
                     <Icon name="smart_toy" size={14} className={campaign.matchScore >= 90 ? "text-emerald-400" : "text-primary"} />
                     <span className={`text-xs font-bold ${campaign.matchScore >= 90 ? "text-emerald-400" : "text-primary"}`}>{campaign.matchScore}% Match</span>
                   </div>
-                )}
+                ) : null}
               </div>
 
               <div className="relative h-32 w-full overflow-hidden rounded-lg bg-surface-subtle">

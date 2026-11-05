@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: lynk
+          POSTGRES_PASSWORD: lynk
+          POSTGRES_DB: lynk
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lynk -d lynk"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://lynk:lynk@127.0.0.1:5432/lynk_test
+      BETTER_AUTH_SECRET: test-secret-key-minimum-32-characters-long
+      BETTER_AUTH_URL: http://127.0.0.1:43124
+      CLIENT_ORIGIN: http://127.0.0.1:43123
+      AGENT_API_KEY: lynk-dev-agent-key-16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create the test database
+        run: pnpm --filter @lynk/server exec node --input-type=module -e "import pg from 'pg'; const admin = new pg.Client({ connectionString: 'postgresql://lynk:lynk@127.0.0.1:5432/lynk' }); await admin.connect(); const existing = await admin.query(\"SELECT 1 FROM pg_database WHERE datname = 'lynk_test'\"); if (existing.rowCount === 0) await admin.query('CREATE DATABASE lynk_test'); await admin.end(); const test = new pg.Client({ connectionString: 'postgresql://lynk:lynk@127.0.0.1:5432/lynk_test' }); await test.connect(); await test.query('CREATE EXTENSION IF NOT EXISTS vector'); await test.end();"
+      - run: pnpm check
+      - run: pnpm --filter @lynk/shared build
+      - run: pnpm --filter @lynk/server build
+      - run: pnpm --filter @lynk/client build
+      - run: pnpm --filter @lynk/agent build

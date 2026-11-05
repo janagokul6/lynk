@@ -321,11 +321,33 @@ export async function withdrawOwnApplication(
   return result.application;
 }
 
-export function messagingStatus() {
+export async function messagingStatus(userId: string | undefined) {
+  const { listThreads } = await import("../messages/messages.service.js");
+  const threads = userId ? await listThreads(userId) : [];
   return {
-    available: false as const,
-    message: "Messaging is not available yet.",
+    available: true as const,
+    message: "Messaging is available on accepted collaborations.",
+    threads,
   };
+}
+
+export async function createInviteFromTool(
+  userId: string | undefined,
+  input: { campaignId: string; creatorId: string },
+  confirmed: boolean
+) {
+  const brandId = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal(
+      "Invite creator",
+      "Send a campaign invite. The creator is notified in the app and by email when they have a Lynk account.",
+      input
+    );
+  }
+  const { createInvite } = await import("../invites/invites.service.js");
+  const result = await createInvite(brandId, input);
+  if (!result.ok) throw new ToolError(result.error, result.status);
+  return result.invite;
 }
 
 export const shortlistHandlers = {
@@ -334,3 +356,148 @@ export const shortlistHandlers = {
   remove: removeFromShortlist,
   group: createGroup,
 };
+
+function summarizeCollab(detail: {
+  role: "brand" | "influencer";
+  application: { id: string; status: string; campaignTitle?: string };
+  submissions: unknown[];
+  ratings: unknown[];
+}) {
+  return {
+    applicationId: detail.application.id,
+    status: detail.application.status,
+    role: detail.role,
+    campaignTitle: detail.application.campaignTitle ?? "Campaign",
+    submissionCount: detail.submissions.length,
+    ratingCount: detail.ratings.length,
+  };
+}
+
+async function collabOrThrow(userId: string | undefined, applicationId: string) {
+  const { collabDetail } = await import("../collab/collab.service.js");
+  const detail = await collabDetail(applicationId, requireUser(userId));
+  if (!detail) throw new ToolError("Application not found", 404);
+  return detail;
+}
+
+export async function collabSummary(userId: string | undefined, applicationId: string) {
+  return summarizeCollab(await collabOrThrow(userId, applicationId));
+}
+
+export async function collabSubmitFromTool(
+  userId: string | undefined,
+  input: { applicationId: string; url: string; note?: string },
+  confirmed: boolean
+) {
+  const owner = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal("Submit content", "Send this draft to the brand for review.", input);
+  }
+  const { submitContent } = await import("../collab/collab.service.js");
+  const result = await submitContent(owner, input.applicationId, { url: input.url, note: input.note });
+  if (!result.ok || !result.detail) throw new ToolError(result.ok ? "Could not submit" : result.error, result.ok ? 500 : result.status);
+  return summarizeCollab(result.detail);
+}
+
+export async function collabRevisionFromTool(
+  userId: string | undefined,
+  input: { applicationId: string; note: string },
+  confirmed: boolean
+) {
+  const owner = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal("Request revision", "Ask the creator to change the submitted work.", input);
+  }
+  const { requestRevision } = await import("../collab/collab.service.js");
+  const result = await requestRevision(owner, input.applicationId, input.note);
+  if (!result.ok || !result.detail) throw new ToolError(result.ok ? "Could not request a revision" : result.error, result.ok ? 500 : result.status);
+  return summarizeCollab(result.detail);
+}
+
+export async function collabApproveFromTool(
+  userId: string | undefined,
+  input: { applicationId: string },
+  confirmed: boolean
+) {
+  const owner = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal("Approve content", "Approve the submitted work so the creator can post it.", input);
+  }
+  const { approveContent } = await import("../collab/collab.service.js");
+  const result = await approveContent(owner, input.applicationId);
+  if (!result.ok || !result.detail) throw new ToolError(result.ok ? "Could not approve" : result.error, result.ok ? 500 : result.status);
+  return summarizeCollab(result.detail);
+}
+
+export async function collabProofFromTool(
+  userId: string | undefined,
+  input: { applicationId: string; url: string },
+  confirmed: boolean
+) {
+  const owner = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal("Submit proof", "Mark the collaboration complete with the live post URL.", input);
+  }
+  const { submitProof } = await import("../collab/collab.service.js");
+  const result = await submitProof(owner, input.applicationId, { url: input.url });
+  if (!result.ok || !result.detail) throw new ToolError(result.ok ? "Could not submit proof" : result.error, result.ok ? 500 : result.status);
+  return summarizeCollab(result.detail);
+}
+
+export async function collabRateFromTool(
+  userId: string | undefined,
+  input: { applicationId: string; score: number; comment?: string },
+  confirmed: boolean
+) {
+  const owner = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal("Leave a rating", `Rate this collaboration ${input.score} out of 5.`, input);
+  }
+  const { rateCollab } = await import("../collab/collab.service.js");
+  const result = await rateCollab(owner, input.applicationId, { score: input.score, comment: input.comment });
+  if (!result.ok || !result.detail) throw new ToolError(result.ok ? "Could not save the rating" : result.error, result.ok ? 500 : result.status);
+  return summarizeCollab(result.detail);
+}
+
+export async function sendMessageFromTool(
+  userId: string | undefined,
+  input: { applicationId: string; body: string },
+  confirmed: boolean
+) {
+  const owner = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal("Send message", "Post this message on the collaboration thread.", input);
+  }
+  const { openThread } = await import("../messages/messages.service.js");
+  const result = await openThread(owner, input.applicationId, input.body);
+  if (!result.ok || !result.thread) throw new ToolError(result.ok ? "Could not send the message" : result.error, result.ok ? 500 : result.status);
+  const sent = result.thread.messages.at(-1);
+  if (!sent) throw new ToolError("Could not send the message", 500);
+  return sent;
+}
+
+export async function myInvites(userId: string | undefined) {
+  const { listInvites } = await import("../invites/invites.service.js");
+  return { invites: await listInvites(requireUser(userId)) };
+}
+
+export async function respondInviteFromTool(
+  userId: string | undefined,
+  input: { inviteId: string; decision: "accepted" | "declined" },
+  confirmed: boolean
+) {
+  const owner = requireUser(userId);
+  if (!confirmed) {
+    return confirmationProposal(
+      input.decision === "accepted" ? "Accept invite" : "Decline invite",
+      input.decision === "accepted"
+        ? "Accept this invite and open the collaboration."
+        : "Decline this invite.",
+      input
+    );
+  }
+  const { respondInvite } = await import("../invites/invites.service.js");
+  const result = await respondInvite(owner, input.inviteId, input.decision);
+  if (!result.ok) throw new ToolError(result.error, result.status);
+  return { status: input.decision, applicationId: result.applicationId };
+}

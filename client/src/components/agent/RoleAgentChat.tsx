@@ -11,10 +11,44 @@ import {
   ConfirmToolCard,
   CreatorMatchWithActions,
   RoiEstimateCard,
-  UnavailableCard,
 } from "./generative";
 import { HomeViewToggle } from "@/components/home/HomeViewToggle";
 import type { HomeView } from "@/lib/home-view";
+
+function ConfirmAction({
+  name,
+  tool,
+  title,
+  label,
+}: {
+  name: string;
+  tool: string;
+  title: string;
+  label: string;
+}) {
+  useCopilotAction({
+    name,
+    available: "disabled",
+    render: ({ result }) => {
+      const proposal = result as
+        | { needsConfirmation?: boolean; summary?: string; action?: string; input?: Record<string, unknown> }
+        | undefined;
+      if (!proposal?.needsConfirmation || !proposal.input) {
+        return <p className="text-sm text-slate-500">Saved.</p>;
+      }
+      return (
+        <ConfirmToolCard
+          title={proposal.action ?? title}
+          summary={proposal.summary ?? title}
+          tool={tool}
+          input={proposal.input}
+          confirmLabel={label}
+        />
+      );
+    },
+  });
+  return null;
+}
 
 function SuggestedPrompts({ prompts }: { prompts: readonly string[] }) {
   const { appendMessage, isLoading } = useCopilotChat();
@@ -186,13 +220,33 @@ export function RoleAgentChat({
   useCopilotAction({
     name: "messages_status",
     available: "disabled",
-    render: ({ result }) => (
-      <UnavailableCard message={(result as { message?: string } | undefined)?.message ?? "Messaging is not available yet."} />
-    ),
+    render: ({ result }) => {
+      const data = result as { message?: string; threads?: { id: string | null; applicationId?: string; title: string; withName: string }[] } | undefined;
+      return (
+        <div className="rounded-xl border border-border bg-white p-3 text-sm dark:bg-surface-dark">
+          <p>{data?.message ?? "No conversations yet."}</p>
+          {data?.threads?.length ? (
+            <ul className="mt-2 space-y-1">
+              {data.threads.map((thread) => (
+                <li key={thread.id ?? thread.applicationId}>{thread.title} with {thread.withName}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      );
+    },
   });
 
   return (
     <div className="flex h-full min-h-[28rem] flex-col gap-3">
+      <ConfirmAction name="messages_send" tool="messages.send" title="Send message" label="Send" />
+      <ConfirmAction name="invites_create" tool="invites.create" title="Invite creator" label="Send invite" />
+      <ConfirmAction name="invites_respond" tool="invites.respond" title="Respond to invite" label="Confirm" />
+      <ConfirmAction name="collab_submit" tool="collab.submit" title="Submit content" label="Submit" />
+      <ConfirmAction name="collab_revision" tool="collab.revision" title="Request revision" label="Request revision" />
+      <ConfirmAction name="collab_approve" tool="collab.approve" title="Approve content" label="Approve" />
+      <ConfirmAction name="collab_proof" tool="collab.proof" title="Submit proof" label="Mark complete" />
+      <ConfirmAction name="collab_rate" tool="collab.rate" title="Leave a rating" label="Submit rating" />
       <SuggestedPrompts prompts={prompts} />
       <div className="min-h-[24rem] flex-1">
         {chatError ? (
@@ -210,7 +264,7 @@ export function RoleAgentChat({
             initial:
               role === "brand"
                 ? "Ask me to find creators, review applicants, or draft a campaign. I won’t publish anything until you confirm."
-                : "Ask me which campaigns fit you, or what’s pending on your applications. Messaging isn’t available yet.",
+                : "Ask me which campaigns fit you, or what’s pending. Messages open after a collaboration is accepted.",
             placeholder: role === "brand" ? "Find creators or draft a campaign…" : "Search live campaigns…",
           }}
         />

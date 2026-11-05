@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { env } from "../config/env.js";
+import { captureException } from "../lib/error-tracking.js";
 import { logger } from "../utils/logger.js";
 
 type HttpError = Error & { statusCode?: number; status?: number };
@@ -19,6 +20,7 @@ export function errorHandler(
     statusCode,
     ...(env.NODE_ENV === "development" ? { stack: err.stack } : {}),
   });
+  if (isServerError) captureException(err);
 
   res.status(statusCode).json({
     error: isServerError ? "Internal Server Error" : err.message || "Request failed",

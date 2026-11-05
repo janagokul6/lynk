@@ -176,7 +176,7 @@ describe("agent tool access", () => {
     expect(JSON.stringify(insights.body.result)).not.toContain(applied.body.influencerId);
 
     const messages = await influencer.post("/api/tools/messages.status").set("Origin", ORIGIN).send({});
-    expect(messages.body.result.available).toBe(false);
+    expect(messages.body.result.available).toBe(true);
 
     setAgentTurnLimitForTests(1);
     const first = await brand.post("/api/tools/messages.status").set("Origin", ORIGIN).send({});

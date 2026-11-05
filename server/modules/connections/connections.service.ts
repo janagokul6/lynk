@@ -20,20 +20,26 @@ export async function listConnections(userId: string) {
 }
 
 export async function upsertConnection(userId: string, input: SocialConnectionCreate) {
+  const tokens: { accessToken?: string; refreshToken?: string } = {};
+  if (input.accessToken) tokens.accessToken = encryptSecret(input.accessToken);
+  if (input.refreshToken) tokens.refreshToken = encryptSecret(input.refreshToken);
   const values = {
     userId,
     platform: input.platform,
     externalAccountId: input.externalAccountId,
     handle: input.handle ?? null,
-    accessToken: input.accessToken ? encryptSecret(input.accessToken) : null,
-    refreshToken: input.refreshToken ? encryptSecret(input.refreshToken) : null,
     scopes: input.scopes ?? null,
     updatedAt: new Date(),
+    ...tokens,
   };
 
   const [row] = await db
     .insert(socialConnection)
-    .values(values)
+    .values({
+      ...values,
+      accessToken: tokens.accessToken ?? null,
+      refreshToken: tokens.refreshToken ?? null,
+    })
     .onConflictDoUpdate({
       target: [socialConnection.userId, socialConnection.platform],
       set: values,

@@ -3,6 +3,7 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { api } from "@/lib/api";
 import type { ApplicationRecord } from "@lynk/shared";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 export default function ApplicationReviewPage() {
@@ -34,7 +35,7 @@ export default function ApplicationReviewPage() {
   return (
     <AppLayout
       variant="brand"
-      activeTab="Campaigns"
+      activeTab="Applicants"
       header={
         <div className="border-b border-border px-4 py-3">
           <h1 className="text-xl font-bold text-text">Applications</h1>
@@ -63,6 +64,7 @@ export default function ApplicationReviewPage() {
               <span className="text-xs font-bold uppercase tracking-wide text-primary">{row.status}</span>
             </div>
             <p className="text-sm font-semibold text-text">{row.campaignTitle}</p>
+            <Link href={`/collab/${row.id}`} className="text-sm font-semibold text-primary">Open collaboration</Link>
             <p className="text-sm text-text-muted whitespace-pre-wrap">
               {row.message?.trim() ? row.message : "No pitch."}
             </p>
@@ -71,7 +73,7 @@ export default function ApplicationReviewPage() {
                 <button
                   type="button"
                   onClick={() => decide(row.id, "accept")}
-                  className="rounded-lg bg-primary px-3 py-2 text-sm font-bold text-white"
+                  className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-bold text-white"
                 >
                   Accept
                 </button>

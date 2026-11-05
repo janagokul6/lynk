@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TOOL_CONFIRM_HEADER, type CreatorMatchHit } from "@lynk/shared";
+import { formatInrBand, TOOL_CONFIRM_HEADER, type CreatorMatchHit } from "@lynk/shared";
 import toast from "react-hot-toast";
 import { api } from "@/lib/api";
 
@@ -158,10 +158,10 @@ export function CreatorActionCards({ creators }: { creators: CreatorMatchHit[] }
                   {selected ? (
                     <ConfirmToolCard
                       title={`Invite @${creator.handle}`}
-                      summary={`Add @${creator.handle} to the shortlist group “Invite: ${selected.title}”. Messaging is not available, so they are not notified.`}
-                      tool="shortlist.add"
-                      input={{ creatorId: creator.id, groupName: `Invite: ${selected.title}` }}
-                      confirmLabel="Add to invite group"
+                      summary={`Invite @${creator.handle} to “${selected.title}”. They are notified in the app and by email when they have a Lynk account.`}
+                      tool="invites.create"
+                      input={{ creatorId: creator.id, campaignId: selected.id }}
+                      confirmLabel="Send invite"
                     />
                   ) : null}
                 </>
@@ -277,7 +277,7 @@ export function CampaignActionCards({
         <article key={campaign.id} className="rounded-xl border border-border bg-white p-3 dark:bg-surface-dark">
           <h3 className="text-sm font-semibold text-slate-900 dark:text-white">{campaign.title}</h3>
           <p className="text-xs text-slate-500">
-            {campaign.brandName || "Brand"} · {campaign.compensationType || "Pay"} {campaign.payMin}–{campaign.payMax}
+            {campaign.brandName || "Brand"} · {campaign.compensationType || "Pay"} {formatInrBand(campaign.payMin ?? "", campaign.payMax ?? "")}
             {campaign.location ? ` · ${campaign.location}` : ""}
           </p>
           {campaign.niches?.length ? <p className="mt-1 text-[11px] text-slate-500">{campaign.niches.join(" · ")}</p> : null}
@@ -431,7 +431,7 @@ export function CampaignDraftCard({
       {draft.description ? <p className="text-slate-600 dark:text-slate-300">{draft.description}</p> : null}
       {draft.payMin || draft.payMax ? (
         <p className="text-xs text-slate-500">
-          Pay {draft.payMin}–{draft.payMax}
+          Pay {formatInrBand(draft.payMin ?? "", draft.payMax ?? "")}
         </p>
       ) : null}
       <p className="text-xs text-slate-500">{result.note || result.summary || "Nothing is published until you confirm."}</p>

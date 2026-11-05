@@ -6,8 +6,13 @@ const sharedEnv = {
   AGENT_TURN_WINDOW_MS: "600000",
   RATE_LIMIT_MAX: "100000",
   RATE_LIMIT_AUTH_MAX: "100000",
+  RATE_LIMIT_MAIL_MAX: "100000",
   LYNK_SCRIPT_MODEL: "1",
   OPENAI_API_KEY: "",
+  BETTER_AUTH_URL: "http://127.0.0.1:43124",
+  CLIENT_ORIGIN: "http://127.0.0.1:43123",
+  NEXT_PUBLIC_API_URL: "http://127.0.0.1:43124",
+  NEXT_PUBLIC_COPILOTKIT_RUNTIME_URL: "http://127.0.0.1:43126/copilotkit",
 };
 
 export default defineConfig({

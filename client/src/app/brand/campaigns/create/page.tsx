@@ -5,6 +5,7 @@ import { Icon } from "@/components/ui/Icon";
 import { api } from "@/lib/api";
 import type { CreateCampaignPayload, Campaign } from "@/types";
 import { CATEGORIES, LOCATIONS, PLATFORMS, WORK_TYPES } from "@/types";
+import { DISCLOSURE_CHECKS } from "@lynk/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -21,27 +22,28 @@ const COMPENSATION_TYPES = ["Fixed Payment", "Product / Barter", "Affiliate", "H
 
 export default function CreateCampaignPage() {
   const [formData, setFormData] = useState({
-    title: "Summer Fitness Product Launch - UGC",
-    campaignType: "Social Media Integration / Video",
-    niches: ["Fitness & Health"],
-    description: "We're launching a new line of premium fitness supplements and looking for authentic fitness creators to create engaging social integration videos.",
-    deliverables: ["Reels / Shorts", "Instagram Stories"],
-    guidelines: "- Must show product clearly in first 3 seconds\n- Include brand mention and tag",
-    platforms: ["Instagram"],
-    followerRange: "Micro (10k - 100k)",
-    minEngagement: "3",
-    location: "Global",
-    minAge: "18",
-    maxAge: "35",
+    title: "",
+    campaignType: "Sponsored Post",
+    niches: [] as string[],
+    description: "",
+    deliverables: [] as string[],
+    guidelines: "",
+    platforms: [] as string[],
+    followerRange: "",
+    minEngagement: "",
+    location: "Remote",
+    minAge: "",
+    maxAge: "",
     compensationType: "Fixed Payment",
-    payMin: "500",
-    payMax: "1000",
-    totalBudget: "10000",
-    creatorsNeeded: "10",
-    perks: ["Free product sample (~₹150)"],
-    applicationDeadline: "2024-06-15",
-    startDate: "2024-06-20",
-    endDate: "2024-06-30"
+    payMin: "",
+    payMax: "",
+    totalBudget: "",
+    creatorsNeeded: "",
+    perks: [] as string[],
+    applicationDeadline: "",
+    startDate: "",
+    endDate: "",
+    disclosureChecks: [] as string[],
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -71,6 +73,7 @@ export default function CreateCampaignPage() {
     applicationDeadline: formData.applicationDeadline || undefined,
     startDate: formData.startDate || undefined,
     endDate: formData.endDate || undefined,
+    disclosureChecks: formData.disclosureChecks,
   });
 
   const handleSaveDraft = async () => {
@@ -311,12 +314,32 @@ export default function CreateCampaignPage() {
                 />
               </div>
 
+              <fieldset className="space-y-2">
+                <legend className="block text-sm font-bold text-text mb-2">FTC and ASCI disclosure</legend>
+                {DISCLOSURE_CHECKS.map((item) => (
+                  <label key={item.id} className="flex items-start gap-3 text-sm text-text">
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={formData.disclosureChecks.includes(item.id)}
+                      onChange={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          disclosureChecks: prev.disclosureChecks.includes(item.id)
+                            ? prev.disclosureChecks.filter((id) => id !== item.id)
+                            : [...prev.disclosureChecks, item.id],
+                        }));
+                      }}
+                    />
+                    <span>{item.label}</span>
+                  </label>
+                ))}
+              </fieldset>
+
               <div className="pt-2">
-                <button className="w-full py-4 border-2 border-dashed border-border rounded-xl flex flex-col items-center justify-center gap-2 text-text-muted hover:text-text hover:border-text-muted/50 hover:bg-surface-subtle transition-all">
-                  <Icon name="cloud_upload" size={24} />
-                  <span className="text-sm font-bold">Upload Brand Assets</span>
-                  <span className="text-xs">Moodboards, logos, or product images (Max 50MB)</span>
-                </button>
+                <p className="text-sm text-text-muted">
+                  Creators upload files from the collaboration page after you accept them.
+                </p>
               </div>
             </section>
 

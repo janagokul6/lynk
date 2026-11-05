@@ -1,3 +1,4 @@
+import { PostgresStore } from "@mastra/pg";
 import { Mastra } from "@mastra/core/mastra";
 import { registerApiRoute, type MiddlewareHandler } from "@mastra/core/server";
 import { MASTRA_RESOURCE_ID_KEY } from "@mastra/core/request-context";
@@ -78,6 +79,11 @@ const statusRoute = registerApiRoute("/status", {
 });
 
 export const mastra = new Mastra({
+  storage: new PostgresStore({
+    id: "lynk-agent",
+    connectionString: agentEnv.DATABASE_URL,
+    schemaName: "mastra",
+  }),
   agents: {
     brandAgent,
     influencerAgent,

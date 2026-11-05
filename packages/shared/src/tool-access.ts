@@ -28,6 +28,16 @@ export const toolPolicies: Record<ToolName, ToolPolicy> = {
   "applications.withdraw": { roles: ["influencer"], agentKey: false },
   "insights.public": { roles: ["influencer"], agentKey: false },
   "messages.status": { roles: ["brand", "influencer"], agentKey: false },
+  "messages.send": { roles: ["brand", "influencer"], agentKey: false },
+  "invites.create": { roles: ["brand"], agentKey: false },
+  "invites.mine": { roles: ["influencer"], agentKey: false },
+  "invites.respond": { roles: ["influencer"], agentKey: false },
+  "collab.summary": { roles: ["brand", "influencer"], agentKey: false },
+  "collab.submit": { roles: ["influencer"], agentKey: false },
+  "collab.revision": { roles: ["brand"], agentKey: false },
+  "collab.approve": { roles: ["brand"], agentKey: false },
+  "collab.proof": { roles: ["influencer"], agentKey: false },
+  "collab.rate": { roles: ["brand", "influencer"], agentKey: false },
 };
 
 export function toolCallerAllowed(name: ToolName, caller: ToolCaller): boolean {

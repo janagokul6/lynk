@@ -33,6 +33,7 @@ export const createCampaignBodySchema = z.object({
   brandName: z.string().trim().max(255).optional(),
   brandImage: z.string().trim().max(1024).optional(),
   campaignImage: z.string().trim().max(1024).optional(),
+  disclosureChecks: z.array(z.string().trim().min(1).max(64)).max(12).optional(),
 });
 
 export const updateCampaignBodySchema = createCampaignBodySchema.partial().extend({

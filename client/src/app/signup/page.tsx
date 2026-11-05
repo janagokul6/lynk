@@ -77,6 +77,9 @@ export default function SignupPage() {
             ))}
           </select>
         </label>
+        <p className="text-xs text-slate-500">
+          By creating an account you agree to the <Link href="/terms">terms</Link> and <Link href="/privacy">privacy notice</Link>. Both are templates for a lawyer to review.
+        </p>
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Creating…" : "Sign up"}
         </Button>

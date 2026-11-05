@@ -3,13 +3,20 @@
 import { homePathForRole, type SelfServeRole } from "@lynk/shared";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 export default function RoleSelectionPage() {
   const router = useRouter();
   const [role, setRole] = useState<SelfServeRole>("brand");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    void api.get<{ user?: { role?: string; roleChosenAt?: string | null } } | null>("/api/me").then((response) => {
+      const account = response.data?.user;
+      if (account?.roleChosenAt && account.role) router.replace(homePathForRole(account.role));
+    });
+  }, [router]);
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();

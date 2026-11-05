@@ -2,6 +2,7 @@
 
 import { AppLayout } from "@/components/layout/AppLayout";
 import { api } from "@/lib/api";
+import Link from "next/link";
 import { useState, useEffect, useMemo, useRef } from "react";
 
 type DiscoverySuggestion = {
@@ -23,11 +24,11 @@ type DiscoveryInfluencer = {
   engagement: string;
   engagementRate: number;
   verified: boolean;
-  platform: "YouTube" | "Instagram" | "TikTok";
+  platform: "YouTube" | "Instagram" | "TikTok" | "Lynk";
   region: string;
-  gender: string;
-  priceRange: string;
-  priceValue: number;
+  gender: string | null;
+  priceRange: string | null;
+  priceValue: number | null;
 };
 
 const CATEGORIES = ["All", "Fitness", "Gaming", "Fashion", "Wellness", "Technology", "Food"];
@@ -177,9 +178,9 @@ export default function DiscoverySearchPage() {
       const matchesEngagement = inf.engagementRate >= filters.engagementMin;
       const matchesPlatform = filters.platform === "All" || inf.platform === filters.platform;
       const matchesRegion = filters.region === "All" || inf.region === filters.region;
-      const matchesGender = filters.gender === "All" || inf.gender === "—" || inf.gender === filters.gender;
+      const matchesGender = filters.gender === "All" || inf.gender === filters.gender;
       const matchesPrice =
-        inf.priceValue <= 0 || (inf.priceValue >= filters.priceMin && inf.priceValue <= filters.priceMax);
+        inf.priceValue == null || (inf.priceValue >= filters.priceMin && inf.priceValue <= filters.priceMax);
       return (
         matchesCategory &&
         matchesVerified &&
@@ -348,7 +349,7 @@ export default function DiscoverySearchPage() {
         {/* Results header & Sorting */}
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-medium text-slate-500 dark:text-muted-foreground">
-            {filteredInfluencers.length} influencers found
+            {filteredInfluencers.length} influencer{filteredInfluencers.length === 1 ? "" : "s"} found
           </span>
           {remoteInfluencersLoading && (
             <span className="text-xs font-medium text-slate-500 dark:text-muted-foreground">
@@ -460,12 +461,12 @@ export default function DiscoverySearchPage() {
                 </div>
 
                 <div className="mt-auto space-y-2">
-                  <button
-                    type="button"
-                    className="w-full py-2 rounded-xl bg-slate-900 dark:bg-primary-500 hover:bg-slate-800 dark:hover:bg-primary-600 text-[12px] font-bold text-white transition-colors shadow-sm"
+                  <Link
+                    href={`/creators/${influencer.id}`}
+                    className="block w-full py-2 rounded-xl bg-slate-900 dark:bg-primary-500 hover:bg-slate-800 dark:hover:bg-primary-600 text-[12px] font-bold text-white text-center transition-colors shadow-sm"
                   >
                     View Profile
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

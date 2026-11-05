@@ -5,6 +5,7 @@ import { Icon } from "@/components/ui/Icon";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { formatInrBand } from "@lynk/shared";
 import type { CampaignSummary, CampaignStatus } from "@/types";
 
 function statusStyles(status: CampaignStatus) {
@@ -153,7 +154,7 @@ export default function BrandCampaignsIndexPage() {
                     <div className="flex flex-col items-end text-right gap-1">
                       <span className="text-xs text-text-muted">Pay band</span>
                       <span className="text-sm font-semibold text-text">
-                        ₹{campaign.payMin} – ₹{campaign.payMax}
+                        {formatInrBand(campaign.payMin, campaign.payMax)}
                       </span>
                     </div>
                   </div>

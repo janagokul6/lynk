@@ -1,11 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
+import { eq } from "drizzle-orm";
 import type { UserRole } from "@lynk/shared";
+import { db } from "../lib/db.js";
+import { user } from "../db/schema.js";
 import { requireSession, type AuthedRequest } from "./requireSession.js";
-
-function readRole(session: AuthedRequest["session"]): UserRole | undefined {
-  const user = session.user as { role?: UserRole };
-  return user.role;
-}
 
 export function requireRole(...roles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -15,18 +13,39 @@ export function requireRole(...roles: UserRole[]) {
         return;
       }
       if (res.headersSent) return;
-      try {
-        const role = readRole((req as AuthedRequest).session);
-        if (!role || !roles.includes(role)) {
-          res.status(403).json({ error: "Forbidden" });
-          return;
-        }
-        next();
-      } catch (error) {
-        next(error instanceof Error ? error : new Error("Forbidden"));
-      }
+      void authorize(req as AuthedRequest, res, next, roles);
     }).catch((error: unknown) => {
       next(error instanceof Error ? error : new Error("Forbidden"));
     });
   };
+}
+
+async function authorize(
+  req: AuthedRequest,
+  res: Response,
+  next: NextFunction,
+  roles: UserRole[]
+): Promise<void> {
+  try {
+    const [account] = await db
+      .select({ role: user.role, roleChosenAt: user.roleChosenAt })
+      .from(user)
+      .where(eq(user.id, req.userId))
+      .limit(1);
+    if (!account) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    if (account.role !== "admin" && !account.roleChosenAt) {
+      res.status(403).json({ error: "Choose a role first" });
+      return;
+    }
+    if (!roles.includes(account.role as UserRole)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    next();
+  } catch (error) {
+    next(error instanceof Error ? error : new Error("Forbidden"));
+  }
 }

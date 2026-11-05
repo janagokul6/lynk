@@ -8,7 +8,7 @@ import {
 import { env } from "../../config/env.js";
 import { db } from "../../lib/db.js";
 import { creatorProfile } from "../../db/schema.js";
-import { embedText, vectorLiteral } from "../../lib/embedding.js";
+import { resolveEmbedding, vectorLiteral } from "../../lib/embedding.js";
 import { domainEvents } from "../../lib/events.js";
 import { ensureQueue, sendJob } from "../../lib/queue.js";
 import { fetchYoutubeChannel, searchYoutubeChannels } from "../../lib/providers/youtube.js";
@@ -27,9 +27,10 @@ export async function upsertCreator(input: {
   niches?: string[];
   country?: string | null;
   raw?: Record<string, unknown>;
+  userId?: string | null;
 }): Promise<CreatorRow> {
   const nicheText = (input.niches ?? []).join(" ");
-  const embedding = embedText(
+  const embedding = await resolveEmbedding(
     `${input.displayName} ${input.handle} ${input.platform} ${nicheText} ${input.country ?? ""}`
   );
 
@@ -47,6 +48,7 @@ export async function upsertCreator(input: {
     embedding,
     syncedAt: new Date(),
     updatedAt: new Date(),
+    ...(input.userId ? { userId: input.userId } : {}),
   };
 
   const [row] = await db
@@ -67,6 +69,7 @@ export async function upsertCreator(input: {
 }
 
 export async function syncCreator(payload: CreatorSyncPayload): Promise<CreatorRow | null> {
+  if (payload.platform === "profile") return null;
   if (payload.platform === "youtube") {
     const channel = await fetchYoutubeChannel(payload.externalId);
     if (!channel) {
@@ -76,6 +79,7 @@ export async function syncCreator(payload: CreatorSyncPayload): Promise<CreatorR
           externalId: payload.externalId,
           handle: payload.handle,
           displayName: payload.handle,
+          userId: payload.userId,
         });
       }
       return null;
@@ -89,6 +93,7 @@ export async function syncCreator(payload: CreatorSyncPayload): Promise<CreatorR
       followerCount: channel.followerCount,
       niches: ["youtube"],
       raw: channel as unknown as Record<string, unknown>,
+      userId: payload.userId,
     });
   }
 
@@ -98,6 +103,7 @@ export async function syncCreator(payload: CreatorSyncPayload): Promise<CreatorR
     handle: payload.handle ?? payload.externalId,
     displayName: payload.handle ?? payload.externalId,
     niches: ["instagram"],
+    userId: payload.userId,
   });
 }
 
@@ -118,7 +124,7 @@ export async function matchCreators(query: CreatorMatchQuery): Promise<CreatorRo
   const whereSql = filters.length ? and(...filters) : undefined;
 
   if (textForEmbed) {
-    const vector = vectorLiteral(embedText(textForEmbed));
+    const vector = vectorLiteral(await resolveEmbedding(textForEmbed));
     const distance = sql`${creatorProfile.embedding} <=> ${vector}::vector`;
     const semantic = await db
       .select()
@@ -207,12 +213,12 @@ export function toDiscoveryInfluencer(row: CreatorRow) {
     followersCount,
     engagement: engagementRate ? `${engagementRate.toFixed(1)}%` : "—",
     engagementRate,
-    verified: false,
-    platform: row.platform === "youtube" ? "YouTube" : "Instagram",
+    verified: Boolean(row.userId),
+    platform: row.platform === "youtube" ? "YouTube" : row.platform === "instagram" ? "Instagram" : "Lynk",
     region: row.country ?? "—",
-    gender: "—",
-    priceRange: "—",
-    priceValue: 0,
+    gender: null,
+    priceRange: null,
+    priceValue: null,
   };
 }
 

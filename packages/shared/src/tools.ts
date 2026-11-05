@@ -23,6 +23,16 @@ export const toolNames = [
   "applications.withdraw",
   "insights.public",
   "messages.status",
+  "messages.send",
+  "invites.create",
+  "invites.mine",
+  "invites.respond",
+  "collab.summary",
+  "collab.submit",
+  "collab.revision",
+  "collab.approve",
+  "collab.proof",
+  "collab.rate",
 ] as const;
 export type ToolName = (typeof toolNames)[number];
 
@@ -48,7 +58,17 @@ export const toolDescriptions: Record<ToolName, string> = {
   "applications.apply": "Apply to a live campaign after the user confirms",
   "applications.withdraw": "Withdraw the signed-in influencer's pending application after confirmation",
   "insights.public": "Public marketplace aggregates only. Never another creator's private data",
-  "messages.status": "Report whether messaging is available",
+  "messages.status": "List message threads on accepted collaborations",
+  "messages.send": "Send a message on an accepted collaboration after the user confirms",
+  "invites.create": "Invite a creator who has a Lynk account onto a campaign the brand owns, after confirmation",
+  "invites.mine": "List campaign invites for the signed-in creator",
+  "invites.respond": "Accept or decline a campaign invite after the user confirms",
+  "collab.summary": "Read the signed-in user's collaboration status, submissions, and ratings",
+  "collab.submit": "Submit draft content on an accepted collaboration after the user confirms",
+  "collab.revision": "Request a revision on submitted content after the brand confirms",
+  "collab.approve": "Approve submitted content after the brand confirms",
+  "collab.proof": "Submit the live post URL and complete the collaboration after the creator confirms",
+  "collab.rate": "Rate a completed collaboration after the user confirms",
 };
 
 export const toolInputSchemas = {

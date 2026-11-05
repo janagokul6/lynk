@@ -19,6 +19,7 @@ export interface MarketplaceFilters {
 
 export interface MarketplaceCampaignRow {
   id: string;
+  userId: string;
   brandName: string | null;
   campaignImage: string | null;
   compensationType: string;
@@ -134,6 +135,7 @@ export async function listMarketplaceCampaigns(
   const rows = await db
     .select({
       id: campaign.id,
+      userId: campaign.userId,
       brandName: campaign.brandName,
       campaignImage: campaign.campaignImage,
       compensationType: campaign.compensationType,
@@ -157,7 +159,17 @@ export async function listMarketplaceCampaigns(
   return rows as MarketplaceCampaignRow[];
 }
 
-export function toMarketplaceCampaignResponse(row: MarketplaceCampaignRow) {
+export function nicheOverlapScore(campaignNiches: string[] | null, viewerNiches: string[]): number | null {
+  if (viewerNiches.length === 0 || !campaignNiches || campaignNiches.length === 0) return null;
+  const wanted = new Set(viewerNiches.map((item) => item.toLowerCase()));
+  const hits = campaignNiches.filter((item) => wanted.has(item.toLowerCase())).length;
+  return Math.round((hits / campaignNiches.length) * 100);
+}
+
+export function toMarketplaceCampaignResponse(
+  row: MarketplaceCampaignRow,
+  options?: { verified?: boolean; viewerNiches?: string[] }
+) {
   const compType = normalizeCompensationType(row.compensationType);
   const category = row.niches?.[0] ?? "Other";
   const deliverable = row.deliverables?.[0] ?? "Campaign";
@@ -169,14 +181,14 @@ export function toMarketplaceCampaignResponse(row: MarketplaceCampaignRow) {
     category,
     brandImage: "",
     campaignImage: row.campaignImage ?? "",
-    verified: false,
-    matchScore: 0,
+    verified: options?.verified ?? false,
+    matchScore: nicheOverlapScore(row.niches, options?.viewerNiches ?? []),
     compensation: `₹${payMaxNum.toLocaleString()}`,
     compensationExtra: compType !== "Fixed" ? `+ ${compType}` : undefined,
     deliverable,
     deliverableIcon: deliverableToIcon(deliverable),
     deliverableColor: deliverableToColor(deliverable),
-    location: row.location ? `🇺🇸 ${row.location}` : "Remote",
+    location: row.location || "Remote",
     isPrimary: false,
     isTrending: false,
     platform: row.platforms?.[0] ?? "Instagram",

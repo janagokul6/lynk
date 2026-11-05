@@ -34,6 +34,7 @@ export interface CreateCampaignInput {
   brandName?: string;
   brandImage?: string;
   campaignImage?: string;
+  disclosureChecks?: string[];
 }
 
 export interface UpdateCampaignInput extends Partial<Omit<CreateCampaignInput, "userId">> {
@@ -70,6 +71,7 @@ function toRow(input: CreateCampaignInput): CampaignInsert {
     brandName: input.brandName ?? null,
     brandImage: input.brandImage ?? null,
     campaignImage: input.campaignImage ?? null,
+    disclosureChecks: input.disclosureChecks ?? [],
   };
 }
 
@@ -110,6 +112,7 @@ export async function updateCampaign(
   if (input.brandName !== undefined) update.brandName = input.brandName;
   if (input.brandImage !== undefined) update.brandImage = input.brandImage;
   if (input.campaignImage !== undefined) update.campaignImage = input.campaignImage;
+  if (input.disclosureChecks !== undefined) update.disclosureChecks = input.disclosureChecks;
 
   const [row] = await db
     .update(campaign)
