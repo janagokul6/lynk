@@ -102,4 +102,17 @@ describe("security audit fixes", () => {
     expect(row?.handle).toBe("fresh.creator");
     expect(row?.userId).toBeNull();
   });
+
+  it("keeps creator discovery behind a brand session", async () => {
+    const anonymous = await request(app).get("/api/discovery/search").query({ q: "beauty" });
+    expect(anonymous.status).toBe(401);
+    const anonymousSuggest = await request(app).get("/api/discovery/suggestions").query({ q: "beauty" });
+    expect(anonymousSuggest.status).toBe(401);
+    const influencer = await signUp("influencer", "discover-influencer");
+    const blocked = await influencer.agent.get("/api/discovery/search").query({ q: "beauty" });
+    expect(blocked.status).toBe(403);
+    const brand = await signUp("brand", "discover-brand");
+    const allowed = await brand.agent.get("/api/discovery/suggestions").query({ q: "beauty" });
+    expect(allowed.status).toBe(200);
+  });
 });
