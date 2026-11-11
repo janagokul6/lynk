@@ -29,6 +29,7 @@ const schema = z.object({
   AGENT_TURN_LIMIT: z.coerce.number().int().positive().default(30),
   AGENT_TURN_WINDOW_MS: z.coerce.number().int().positive().default(10 * 60 * 1000),
   LYNK_SCRIPT_MODEL: booleanFromEnv.default(false),
+  AGENT_STUDIO: booleanFromEnv.default(false),
   DATABASE_URL: z.string().min(1).default("postgresql://lynk:lynk@127.0.0.1:5432/lynk"),
 });
 
@@ -41,6 +42,7 @@ export const agentEnv = schema.parse({
   AGENT_TURN_LIMIT: process.env.AGENT_TURN_LIMIT,
   AGENT_TURN_WINDOW_MS: process.env.AGENT_TURN_WINDOW_MS,
   LYNK_SCRIPT_MODEL: process.env.LYNK_SCRIPT_MODEL,
+  AGENT_STUDIO: process.env.NODE_ENV === "production" ? undefined : process.env.AGENT_STUDIO,
   DATABASE_URL: process.env.DATABASE_URL,
 });
 
