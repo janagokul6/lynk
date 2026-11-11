@@ -1,27 +1,33 @@
 import type { Request, Response } from "express";
+import { eq } from "drizzle-orm";
 import {
   TOOL_CONFIRM_HEADER,
   toolCallerAllowed,
   toolNames,
   toolsForCaller,
+  type ToolCaller,
   type ToolName,
 } from "@lynk/shared";
+import { db } from "../../lib/db.js";
+import { user } from "../../db/schema.js";
 import { consumeAgentTurn } from "../../lib/agent-turns.js";
 import type { AgentRequest } from "../../policies/requireAgentOrSession.js";
 import { ToolError } from "./tools.errors.js";
 import { invokeTool, toolDescriptors } from "./tools.registry.js";
 
-function sessionRole(req: AgentRequest): string | undefined {
-  const user = req.session?.user as { role?: string } | undefined;
-  return user?.role;
+async function callerFor(req: AgentRequest): Promise<ToolCaller> {
+  if (req.agentAuth === "key") return { kind: "key" };
+  const [account] = await db
+    .select({ role: user.role, roleChosenAt: user.roleChosenAt })
+    .from(user)
+    .where(eq(user.id, req.userId))
+    .limit(1);
+  const chosen = account && (account.role === "admin" || account.roleChosenAt);
+  return { kind: "session", role: chosen ? account.role : "" };
 }
 
 export async function listTools(req: Request, res: Response): Promise<void> {
-  const authed = req as AgentRequest;
-  const caller =
-    authed.agentAuth === "key"
-      ? ({ kind: "key" } as const)
-      : ({ kind: "session", role: sessionRole(authed) ?? "" } as const);
+  const caller = await callerFor(req as AgentRequest);
   const allowed = new Set(toolsForCaller(caller));
   res.json({ tools: toolDescriptors.filter((tool) => allowed.has(tool.name)) });
 }
@@ -34,10 +40,7 @@ export async function runTool(req: Request, res: Response): Promise<void> {
   }
 
   const authed = req as AgentRequest;
-  const caller =
-    authed.agentAuth === "key"
-      ? ({ kind: "key" } as const)
-      : ({ kind: "session", role: sessionRole(authed) ?? "" } as const);
+  const caller = await callerFor(authed);
   if (!toolCallerAllowed(name, caller)) {
     res.status(403).json({ error: "Forbidden" });
     return;

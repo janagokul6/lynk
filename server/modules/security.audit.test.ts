@@ -22,7 +22,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { TOOL_CONFIRM_HEADER, creatorSyncPayloadSchema } from "@lynk/shared";
 import app from "../app.js";
 import { db } from "../lib/db.js";
-import { creatorProfile } from "../db/schema.js";
+import { campaign, creatorProfile } from "../db/schema.js";
 import { syncCreator } from "./creators/creators.service.js";
 
 const ORIGIN = "http://localhost:43123";
@@ -114,5 +114,35 @@ describe("security audit fixes", () => {
     const brand = await signUp("brand", "discover-brand");
     const allowed = await brand.agent.get("/api/discovery/suggestions").query({ q: "beauty" });
     expect(allowed.status).toBe(200);
+  });
+
+  it("blocks role tools until the account has chosen a role", async () => {
+    const open = await signUp(undefined, "no-role");
+    const listed = await open.agent.get("/api/tools").set("Origin", ORIGIN);
+    expect(listed.status).toBe(200);
+    expect(listed.body.tools).toEqual([]);
+    const created = await open.agent
+      .post("/api/tools/campaigns.create")
+      .set("Origin", ORIGIN)
+      .set(TOOL_CONFIRM_HEADER, "1")
+      .send({
+        title: "Role skip",
+        campaignType: "Sponsored Post",
+        description: "Should not save",
+        niches: ["Beauty & Wellness"],
+        platforms: ["Instagram"],
+        deliverables: ["Reels / Shorts"],
+        compensationType: "Fixed",
+        payMin: "100",
+        payMax: "200",
+        publish: true,
+      });
+    expect(created.status).toBe(403);
+    const rows = await db.select().from(campaign).where(eq(campaign.userId, open.id));
+    expect(rows).toHaveLength(0);
+
+    const brand = await signUp("brand", "chosen-brand");
+    const brandTools = await brand.agent.get("/api/tools").set("Origin", ORIGIN);
+    expect(brandTools.body.tools.map((tool: { name: string }) => tool.name)).toContain("campaigns.create");
   });
 });
