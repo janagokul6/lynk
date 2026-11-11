@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { env } from "../../config/env.js";
-import { devMailboxEnabled, recentMail } from "../../lib/mailer.js";
+import { devMailboxEnabled, isLoopbackAddress, recentMail } from "../../lib/mailer.js";
 
 export const configRouter = Router();
 
@@ -16,7 +16,7 @@ configRouter.get("/", (_req: Request, res: Response) => {
 export const devRouter = Router();
 
 devRouter.get("/mailbox", (req: Request, res: Response) => {
-  if (!devMailboxEnabled()) {
+  if (!devMailboxEnabled() || !isLoopbackAddress(req.socket.remoteAddress)) {
     res.status(404).json({ error: "Not found" });
     return;
   }

@@ -13,7 +13,7 @@ describe("review guards", () => {
 
   it("keeps the dev mailbox and message bodies out of production", () => {
     expect(devMailboxEnabled("production")).toBe(false);
-    expect(devMailboxEnabled("test")).toBe(true);
+    expect(devMailboxEnabled("test", false)).toBe(true);
     expect(mailLogFields({ to: "a@example.com", subject: "Reset", text: "https://secret" }, "production")).toEqual({
       to: "a@example.com",
       subject: "Reset",

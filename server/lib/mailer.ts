@@ -20,8 +20,15 @@ export function clearMailbox(): void {
   mailbox.length = 0;
 }
 
-export function devMailboxEnabled(nodeEnv: string = env.NODE_ENV): boolean {
-  return nodeEnv !== "production";
+export function devMailboxEnabled(
+  nodeEnv: string = env.NODE_ENV,
+  hasTransport: boolean = Boolean(env.RESEND_API_KEY || env.SMTP_URL)
+): boolean {
+  return nodeEnv !== "production" && !hasTransport;
+}
+
+export function isLoopbackAddress(address: string | undefined): boolean {
+  return address === "127.0.0.1" || address === "::1" || address === "::ffff:127.0.0.1";
 }
 
 export function mailLogFields(

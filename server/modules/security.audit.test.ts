@@ -24,6 +24,7 @@ import app from "../app.js";
 import { db } from "../lib/db.js";
 import { campaign, creatorProfile } from "../db/schema.js";
 import { syncCreator } from "./creators/creators.service.js";
+import { devMailboxEnabled, isLoopbackAddress } from "../lib/mailer.js";
 
 const ORIGIN = "http://localhost:43123";
 
@@ -144,5 +145,16 @@ describe("security audit fixes", () => {
     const brand = await signUp("brand", "chosen-brand");
     const brandTools = await brand.agent.get("/api/tools").set("Origin", ORIGIN);
     expect(brandTools.body.tools.map((tool: { name: string }) => tool.name)).toContain("campaigns.create");
+  });
+
+  it("serves the dev mailbox only to local requests without a real mail transport", async () => {
+    expect(devMailboxEnabled("development", false)).toBe(true);
+    expect(devMailboxEnabled("development", true)).toBe(false);
+    expect(devMailboxEnabled("production", false)).toBe(false);
+    expect(isLoopbackAddress("127.0.0.1")).toBe(true);
+    expect(isLoopbackAddress("::1")).toBe(true);
+    expect(isLoopbackAddress("::ffff:127.0.0.1")).toBe(true);
+    expect(isLoopbackAddress("203.0.113.9")).toBe(false);
+    expect(isLoopbackAddress(undefined)).toBe(false);
   });
 });
