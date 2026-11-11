@@ -6,6 +6,7 @@ import { registerCopilotKit } from "@ag-ui/mastra/copilotkit";
 import { createSlidingWindowLimiter } from "@lynk/shared";
 import { brandAgent } from "../agents/brand.js";
 import { influencerAgent } from "../agents/influencer.js";
+import { isAppRoute } from "../app-routes.js";
 import {
   agentAllowedForRole,
   agentIdFromCopilotBody,
@@ -18,6 +19,14 @@ const turnLimiter = createSlidingWindowLimiter({
   limit: agentEnv.AGENT_TURN_LIMIT,
   windowMs: agentEnv.AGENT_TURN_WINDOW_MS,
 });
+
+const onlyAppRoutes: MiddlewareHandler = async (c, next) => {
+  if (agentEnv.AGENT_STUDIO || isAppRoute(c.req.path)) {
+    await next();
+    return;
+  }
+  return c.json({ error: "Not found" }, 404);
+};
 
 const requireSignedInSession: MiddlewareHandler = async (c, next) => {
   if (c.req.method === "OPTIONS") {
@@ -91,6 +100,7 @@ export const mastra = new Mastra({
   server: {
     port: 43126,
     host: agentEnv.AGENT_HOST,
+    middleware: onlyAppRoutes,
     cors: {
       origin: [agentEnv.CLIENT_ORIGIN, "http://localhost:43123", "http://127.0.0.1:43123"],
       allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],

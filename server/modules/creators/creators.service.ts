@@ -68,21 +68,29 @@ export async function upsertCreator(input: {
   return row;
 }
 
+async function insertCreatorIfMissing(input: { platform: CreatorPlatform; externalId: string; handle: string }) {
+  const [existing] = await db
+    .select()
+    .from(creatorProfile)
+    .where(and(eq(creatorProfile.platform, input.platform), eq(creatorProfile.externalId, input.externalId)))
+    .limit(1);
+  if (existing) return existing;
+  return upsertCreator({
+    platform: input.platform,
+    externalId: input.externalId,
+    handle: input.handle,
+    displayName: input.handle,
+    niches: [input.platform],
+  });
+}
+
 export async function syncCreator(payload: CreatorSyncPayload): Promise<CreatorRow | null> {
   if (payload.platform === "profile") return null;
   if (payload.platform === "youtube") {
     const channel = await fetchYoutubeChannel(payload.externalId);
     if (!channel) {
-      if (payload.handle) {
-        return upsertCreator({
-          platform: "youtube",
-          externalId: payload.externalId,
-          handle: payload.handle,
-          displayName: payload.handle,
-          userId: payload.userId,
-        });
-      }
-      return null;
+      if (!payload.handle) return null;
+      return insertCreatorIfMissing({ platform: "youtube", externalId: payload.externalId, handle: payload.handle });
     }
     return upsertCreator({
       platform: "youtube",
@@ -93,17 +101,13 @@ export async function syncCreator(payload: CreatorSyncPayload): Promise<CreatorR
       followerCount: channel.followerCount,
       niches: ["youtube"],
       raw: channel as unknown as Record<string, unknown>,
-      userId: payload.userId,
     });
   }
 
-  return upsertCreator({
+  return insertCreatorIfMissing({
     platform: "instagram",
     externalId: payload.externalId,
     handle: payload.handle ?? payload.externalId,
-    displayName: payload.handle ?? payload.externalId,
-    niches: ["instagram"],
-    userId: payload.userId,
   });
 }
 
